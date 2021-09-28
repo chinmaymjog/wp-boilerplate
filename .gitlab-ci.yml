@@ -10,3 +10,5 @@ build_image:
     script:
       - docker build -t $DOCKER_REPOSITORY:latest .
       - docker push $$DOCKER_REPOSITORY:latest
+    tags:
+      - wp
