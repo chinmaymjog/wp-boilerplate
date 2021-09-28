@@ -6,7 +6,7 @@ stages:
 build_image:
     stage: build
     before_script:
-      - docker login $DOCKER_USER $DOCKER_PASSWORD
+      - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     script:
       - docker build -t $DOCKER_REPOSITORY:latest .
       - docker push $$DOCKER_REPOSITORY:latest
