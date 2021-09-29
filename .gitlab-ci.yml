@@ -1,1 +1,20 @@
+image: docker:19.03.13
 
+services:
+  - name: docker:19.03.13-dind
+    alias: docker
+
+stages:
+  - build
+  - test
+  - deploy
+
+build_image:
+    stage: build
+    before_script:
+      - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    script:
+      - docker build -t $DOCKER_REPOSITORY:latest .
+      - docker push $DOCKER_REPOSITORY:latest
+    tags:
+      - wp
