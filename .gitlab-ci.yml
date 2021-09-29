@@ -1,3 +1,8 @@
+image: docker:19.03.13
+
+services:
+  - docker:19.03.13-dind
+
 stages:
   - build
   - test
@@ -5,7 +10,6 @@ stages:
 
 build_image:
     stage: build
-    image: docker:20.10.8-dind
     before_script:
       - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     script:
@@ -13,5 +17,5 @@ build_image:
       - echo "$DOCKER_USER loggen in with password $DOCKER_PASSWORD"
 #      - docker build -t $DOCKER_REPOSITORY:latest .
 #      - docker push $$DOCKER_REPOSITORY:latest
-#    tags:
-#      - wp
+    tags:
+      - wp
