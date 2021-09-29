@@ -11,9 +11,11 @@ stages:
 build_image:
     stage: build
     before_script:
-      - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+      - echo "$DOCKER_USER"
+      - echo "$DOCKER_PASSWORD"
+#      - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     script:
-      - docker login
+#      - docker login
       - echo "$DOCKER_USER loggen in with password $DOCKER_PASSWORD"
 #      - docker build -t $DOCKER_REPOSITORY:latest .
 #      - docker push $$DOCKER_REPOSITORY:latest
