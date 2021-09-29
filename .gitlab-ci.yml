@@ -13,5 +13,5 @@ build_image:
       - echo "$DOCKER_USER loggen in with password $DOCKER_PASSWORD"
 #      - docker build -t $DOCKER_REPOSITORY:latest .
 #      - docker push $$DOCKER_REPOSITORY:latest
-    tags:
-      - wp
+#    tags:
+#      - wp
