@@ -33,4 +33,4 @@ deploy_image:
        - docker-compose pull
        - docker-compose up -d
      tags:
-       - shell
+       - wp
