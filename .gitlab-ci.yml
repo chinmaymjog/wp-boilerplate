@@ -26,11 +26,11 @@ deploy_image:
      stage: deploy
      extends: .before
      script:
-       - curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-       - chmod +x /usr/local/bin/docker-compose
-       - ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-       - docker-compose --version
-       - docker-compose pull
-       - docker-compose up -d
+       - docker run -d -p 80:80 -p 443:443 --name dev-site \
+                    -e WORDPRESS_DB_HOST=$DB_HOST:$DB_PORT \
+                    -e WORDPRESS_DB_NAME=$DEV_DB \
+                    -e WORDPRESS_DB_USER=$DEV_DB_USER \
+                    -e WORDPRESS_DB_PASSWORD=$DEV_DB_PASSWORD \
+                    $DOCKER_REPOSITORY:latest
      tags:
        - wp
