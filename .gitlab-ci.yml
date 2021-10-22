@@ -23,9 +23,19 @@ build_image:
       - wp
 
 deploy_image:
+     image: alpine
      stage: deploy
-     extends: .before
+     # extends: .before
+     before_script:
+       - apk add openssh-client # Add SSH client for alpine 
+       - eval $(ssh-agent -s) # Run the SSH client 
+        # Adding environment's variable SSH_PRIVATE_KEY to the SSH client's agent that manages the private keys
+       - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        # Create the SSH directory and give it the right permissions
+       - mkdir -p ~/.ssh
+       - chmod 700 ~/.ssh
      script:
-       - docker run -d -p 80:80 -p 443:443 --name dev-site -e WORDPRESS_DB_HOST=$DB_HOST:$DB_PORT -e WORDPRESS_DB_NAME=$DEV_DB -e WORDPRESS_DB_USER=$DEV_DB_USER -e WORDPRESS_DB_PASSWORD=$DEV_DB_PASSWORD $DOCKER_REPOSITORY:latest
+       - ssh -o StrictHostKeyChecking=no root@172.26.0.1 && docker login -u $DOCKER_USER -p $DOCKER_PASSWORD && docker run -d -p 80:80 -p 443:443 --name dev-site -e WORDPRESS_DB_HOST=$DB_HOST:$DB_PORT -e WORDPRESS_DB_NAME=$DEV_DB -e WORDPRESS_DB_USER=$DEV_DB_USER -e WORDPRESS_DB_PASSWORD=$DEV_DB_PASSWORD $DOCKER_REPOSITORY:latest
+       # - docker run -d -p 80:80 -p 443:443 --name dev-site -e WORDPRESS_DB_HOST=$DB_HOST:$DB_PORT -e WORDPRESS_DB_NAME=$DEV_DB -e WORDPRESS_DB_USER=$DEV_DB_USER -e WORDPRESS_DB_PASSWORD=$DEV_DB_PASSWORD $DOCKER_REPOSITORY:latest
      tags:
        - wp
