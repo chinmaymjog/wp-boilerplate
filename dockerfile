@@ -1,5 +1,15 @@
-FROM wordpress:php7.4-apache
+FROM chinmaymjog/themes-plugins:latest AS common
 
-COPY ./plugins /var/www/html/wp-content/plugins
-COPY ./themes /var/www/html/wp-content/themes
-COPY ./php.ini /usr/local/etc/php/conf.d/
+COPY /pkg-mgr/ /pkg-mgr/
+
+RUN bash /pkg-mgr/copy_plugins_themes -t themes
+RUN bash /pkg-mgr/copy_plugins_themes -t plugins
+
+FROM chinmaymjog/wp-base:latest
+
+COPY --from=common --chown=www-data:www-data /common-themes ./wp-content/themes/
+COPY --from=common --chown=www-data:www-data /common-plugins ./wp-content/plugins/
+
+COPY src/wp-content/themes/ ./wp-content/themes/
+COPY src/wp-content/plugins/ ./wp-content/plugins/
+# COPY ./src/wp-config.php ./wp-config.php
