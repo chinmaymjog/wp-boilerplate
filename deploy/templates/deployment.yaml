@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app_name }}
+  namespace: {{ .Values.app_name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.app_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app_name }}
+    spec:
+      containers:
+      - name: {{ .Values.app_name }}
+        image: {{ .Values.cr_repo }}/wp-base:latest
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - mountPath: /usr/src/wordpress/wp-content/uploads
+            name: nfs-mount
+            subPath: uploads
+          - mountPath: /usr/src/wordpress/.htaccess
+            name: nfs-mount
+            subPath: htaccess
+      imagePullSecrets:
+        - name: cr-auth
+      volumes:
+      - name: nfs-mount
+        persistentVolumeClaim:
+          claimName: pvc-{{ .Values.app_name }}

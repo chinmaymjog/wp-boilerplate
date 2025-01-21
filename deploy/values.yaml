@@ -1,0 +1,9 @@
+app_name: app1
+basic_auth: "YWRtaW46JGFwcjEkei9jc0kxMFYkeGQya2FsOU1SY25jLlI2ZUFOdkM3Lwo="
+cr_auth: "eyJhdXRocyI6eyJodHRwczovL2luZGV4LmRvY2tlci5pby92MS8iOnsidXNlcm5hbWUiOiJjaGlubWF5bWpvZyIsInBhc3N3b3JkIjoiQ2owZ0AyMDIyIiwiZW1haWwiOiJjaGlubWF5bWpvZ0BnbWFpbC5jb20iLCJhdXRoIjoiWTJocGJtMWhlVzFxYjJjNlEyb3daMEF5TURJeSJ9fX0="
+azstaccountkey: "OVV2eSthZ0MyUmpKSFppZjlLVzFYU2Z6K2hjQVlFOTVkS0RKMVB6blFWMWx1anhsNE83dEVXUGFyMVp4WUhtbEYrTUd3VjRuSWxiMCtBU3RpcnJoaFE9PQ=="
+azstaccountname: "ZmEwMzYyYzA4MDhhMDRmZjQ4OTY5Njk="
+cr_repo: "chinmaymjog"
+hosts:
+  - app1.example.io
+  - app2.example.io
