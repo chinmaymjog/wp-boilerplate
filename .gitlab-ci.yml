@@ -16,20 +16,20 @@ stages:
 .dev_ref: &dev_ref
   environment: "$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
-    - if $CI_COMMIT_BRANCH = "dev"
-  when: manual
+    - if: $CI_COMMIT_BRANCH = "dev"
+      when: manual
 
 .preprod_ref: &preprod_ref
   environment: "$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
-    - if $CI_COMMIT_BRANCH = $CI_DEFAULT_BRANCH
-  when: manual
+    - if: $CI_COMMIT_BRANCH = $CI_DEFAULT_BRANCH
+      when: manual
 
 .prod_ref: &prod_ref
   environment: "$CI_PROJECT_NAME.ilearndevops.in"
   rules:
-    - if $CI_COMMIT_TAG = "v\d\.\d\.\d"
-  when: manual
+    - if: $CI_COMMIT_TAG = "v\d\.\d\.\d"
+      when: manual
 
 .build_image: &build_image
     - |
