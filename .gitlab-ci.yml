@@ -47,4 +47,6 @@ dev_build:
   stage: build
   script: *build_image
   <<: *dev_ref
+  tags:
+    - docker
 
