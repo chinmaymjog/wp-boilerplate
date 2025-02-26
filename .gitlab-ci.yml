@@ -1,7 +1,7 @@
 image: chinmaymjog/cicd-toolkit:latest
 
 before_script:
-    - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+  - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
 
 variables:
   DOCKER_HOST: tcp://docker:2376
@@ -11,27 +11,35 @@ variables:
 
 stages:
   - build
+  - migrations
   - deploy
 
-.dev_ref: &dev_ref
-  environment: "$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
+.dev_ref:
+  environment:
+    name: "development"
+    url: "http://$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
       when: manual
 
-.preprod_ref: &preprod_ref
-  environment: "$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
+.preprod_ref:
+  environment:
+    name: "pre-production"
+    url: "http://$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: manual
 
-.prod_ref: &prod_ref
-  environment: "$CI_PROJECT_NAME.ilearndevops.in"
+.prod_ref:
+  environment:
+    name: "production"
+    url: "http://$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_TAG == "v\d\.\d\.\d"
       when: manual
 
-.build_image: &build_image
+.build_image:
+  script:
     - |
       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
         tag=""
@@ -43,10 +51,38 @@ stages:
     - docker build --pull -t "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}" .
     - docker push "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}"
 
+.dump:
+  script:
+    - ./db-dump --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
+
+.restore:
+  script:
+    - ./db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
+
+.db_migrate:
+  script:
+    - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
+
+.pvc_check:
+  script:
+    - ./fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $CI_COMMIT_REF_SLUG --file $HTACCESS_FILE
+
+.assets_sync:
+  script:
+    - ./assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
+
 dev_build:
   stage: build
-  script: *build_image
-  <<: *dev_ref
+  extends:
+    - .build_image
   tags:
     - docker
 
+dev_dup:
+  stage: migrations
+  variables:
+    ST_CONTAINER: $CI_PROJECT_NAME
+  extends:
+    - .dump
+  tags:
+    - docker
