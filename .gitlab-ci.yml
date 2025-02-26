@@ -53,11 +53,11 @@ stages:
 
 .dump:
   script:
-    - ./db-dump --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
+    - db-dump --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
 
 .restore:
   script:
-    - ./db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
+    - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
 
 .db_migrate:
   script:
@@ -65,11 +65,11 @@ stages:
 
 .pvc_check:
   script:
-    - ./fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $CI_COMMIT_REF_SLUG --file $HTACCESS_FILE
+    - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $CI_COMMIT_REF_SLUG --file $HTACCESS_FILE
 
 .assets_sync:
   script:
-    - ./assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
+    - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
 
 dev_build:
   stage: build
