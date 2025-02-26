@@ -73,6 +73,8 @@ stages:
 
 dev_build:
   stage: build
+  services:
+    - docker:dind
   extends:
     - .build_image
   tags:
