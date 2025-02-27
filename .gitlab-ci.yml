@@ -50,6 +50,7 @@ stages:
       fi
     - docker build --pull -t "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}" .
     - docker push "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}"
+
 .db_create:
   script:
     - db-create --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME
@@ -66,7 +67,7 @@ stages:
   script:
     - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
-.pvc_check:
+.fs_create:
   script:
     - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $CI_COMMIT_REF_SLUG --file $HTACCESS_FILE
 
@@ -93,21 +94,21 @@ dev_db_create:
     DB_NAME: $CI_PROJECT_NAME
   extends:
     - .db_create
+    - .fs_create
   tags:
     - docker
-
-dev_dump:
-  stage: migrations
-  variables:
-    ENV: DEV
-    DB_HOST: $DEV_DB_HOST
-    DB_ADMIN: $DEV_DB_ADMIN
-    DB_PASS: $DEV_DB_PASS
-    DB_NAME: $CI_PROJECT_NAME
-    ST_ACCOUNT: $DEV_ST_ACCOUNT
-    ST_KEY: $DEV_ST_KEY
-    ST_CONTAINER: $CI_PROJECT_NAME
-  extends:
-    - .dump
-  tags:
-    - docker
+# dev_dump:
+#   stage: migrations
+#   variables:
+#     ENV: DEV
+#     DB_HOST: $DEV_DB_HOST
+#     DB_ADMIN: $DEV_DB_ADMIN
+#     DB_PASS: $DEV_DB_PASS
+#     DB_NAME: $CI_PROJECT_NAME
+#     ST_ACCOUNT: $DEV_ST_ACCOUNT
+#     ST_KEY: $DEV_ST_KEY
+#     ST_CONTAINER: $CI_PROJECT_NAME
+#   extends:
+#     - .dump
+#   tags:
+#     - docker
