@@ -113,6 +113,8 @@ dev_deploy:
     K8S_CLUSTER: $DEV_K8S_CLUSTER
   script:
     - *aks_deploy
+  tags:
+    - docker
 # dev_dump:
 #   stage: migrations
 #   variables:
