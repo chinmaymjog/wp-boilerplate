@@ -15,6 +15,15 @@ spec:
       containers:
       - name: {{ .Values.app_name }}
         image: {{ .Values.cr_repo }}/wp-base:latest
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: {{ .Values.db_host }}
+        - name: WORDPRESS_DB_NAME
+          value: {{ .Values.db_name }}
+        - name: WORDPRESS_DB_USER
+          value: {{ .Values.db_user }}
+        - name: WORDPRESS_DB_PASSWORD       
+          value: {{ .Values.db_pass }}  
         resources:
           limits:
             memory: "128Mi"
@@ -33,4 +42,4 @@ spec:
       volumes:
       - name: nfs-mount
         persistentVolumeClaim:
-          claimName: pvc-{{ .Values.app_name }}
+          claimName: {{ .Values.app_name }}

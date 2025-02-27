@@ -75,6 +75,7 @@ stages:
   - kubectl config set-context $K8S_CLUSTER --cluster=$K8S_CLUSTER --user=$K8S_USER
   - kubectl config use-context $K8S_CLUSTER
   - kubectl get nodes
+  - helm upgrade --install $CI_PROJECT_NAME ./deploy --set app_name=$CI_PROJECT_NAME --set basic_auth=$BASIC_AUTH --set cr_auth=$CR_AUTH --set azstaccountkey=$AZSTACCOUNTKEY --set azstaccountname=$AZSTACCOUNTNAME --set cr_repo=$CR_REPO --set db_host=$DB_HOST --set db_name=$DB_NAME --set db_user=$DB_USER --set db_pass=$DB_PASS --set hosts=$SITE_DOMAIN
 
 dev_build:
   stage: build

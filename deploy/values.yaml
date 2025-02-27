@@ -1,9 +1,11 @@
-app_name: $CI_COMMIT_BRANCH
+app_name: $CI_COMMIT_REF_SLUG
 basic_auth: $BASIC_AUTH
 cr_auth: $CR_AUTH
 azstaccountkey: $AZSTACCOUNTKEY
 azstaccountname: $AZSTACCOUNTNAME
 cr_repo: $CR_REPO
-hosts:
-  - app1.example.io
-  - app2.example.io
+db_host: $DB_HOST
+db_name: $DB_NAME
+db_user: $DB_USER
+db_pass: $DB_PASS
+hosts: $SITE_DOMAIN
