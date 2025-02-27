@@ -1,4 +1,5 @@
-app_name: $CI_COMMIT_REF_SLUG
+app_name: $CI_PROJECT_NAME
+image_tag: $CI_COMMIT_REF_SLUG
 basic_auth: $BASIC_AUTH
 cr_auth: $CR_AUTH
 azstaccountkey: $AZSTACCOUNTKEY

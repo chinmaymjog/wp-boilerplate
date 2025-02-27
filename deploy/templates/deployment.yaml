@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.app_name }}
-        image: {{ .Values.cr_repo }}/wp-base:latest
+        image: {{ .Values.cr_repo }}/{{ .Values.app_name }}:{{ .Values.image_tag }}
         env:
         - name: WORDPRESS_DB_HOST
           value: {{ .Values.db_host }}
