@@ -50,6 +50,9 @@ stages:
       fi
     - docker build --pull -t "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}" .
     - docker push "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}"
+.db_create:
+  script:
+    - db-create --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME
 
 .dump:
   script:
@@ -80,9 +83,29 @@ dev_build:
   tags:
     - docker
 
-dev_dup:
+dev_db_create:
+  stage: build
+  variables:
+    ENV: DEV
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    DB_NAME: $CI_PROJECT_NAME
+  extends:
+    - .db_create
+  tags:
+    - docker
+
+dev_dump:
   stage: migrations
   variables:
+    ENV: DEV
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    DB_NAME: $CI_PROJECT_NAME
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
     ST_CONTAINER: $CI_PROJECT_NAME
   extends:
     - .dump
