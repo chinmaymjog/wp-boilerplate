@@ -63,7 +63,7 @@ stages:
   - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
 .fs_create: &fs_create
-  - echo $HTACCESS_FILE > .htaccess
+  - cat $HTACCESS_FILE > .htaccess
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $CI_COMMIT_REF_SLUG --file .htaccess
 
 .assets_sync: &assets_sync
