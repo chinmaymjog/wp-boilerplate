@@ -69,7 +69,7 @@ stages:
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
 
-.aks_deploy:
+.aks_deploy: &aks_deploy
   - kubectl config set-cluster $K8S_CLUSTER --server=$K8S_SERVER --certificate-authority=K8S_CA
   - kubectl config set-credentials $K8S_USER --token=$K8S_TOKEN
   - kubectl config set-context $K8S_CLUSTER --cluster=$K8S_CLUSTER --user=$K8S_USER
