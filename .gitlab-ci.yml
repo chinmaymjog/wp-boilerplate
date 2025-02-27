@@ -19,7 +19,7 @@ stages:
     name: "development"
     url: "http://$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
       when: manual
 
 .preprod_ref:
@@ -33,7 +33,7 @@ stages:
 .prod_ref:
   environment:
     name: "production"
-    url: "http://$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
+    url: "http://$SITE_DOMAIN"
   rules:
     - if: $CI_COMMIT_TAG == "v\d\.\d\.\d"
       when: manual
@@ -75,7 +75,7 @@ stages:
   - kubectl config set-context $K8S_CLUSTER --cluster=$K8S_CLUSTER --user=$K8S_USER
   - kubectl config use-context $K8S_CLUSTER
   - kubectl get nodes
-  - helm upgrade --install $CI_PROJECT_NAME ./deploy --set app_name=$CI_PROJECT_NAME --set basic_auth=$BASIC_AUTH --set cr_auth=$CR_AUTH --set azstaccountkey=$AZSTACCOUNTKEY --set azstaccountname=$AZSTACCOUNTNAME --set cr_repo=$CR_REPO --set db_host=$DB_HOST --set db_name=$DB_NAME --set db_user=$DB_USER --set db_pass=$DB_PASS --set hosts=$SITE_DOMAIN
+  - helm upgrade --install $CI_PROJECT_NAME ./deploy --set app_name=$CI_COMMIT_REF_SLUG --set basic_auth=$BASIC_AUTH --set cr_auth=$CR_AUTH --set azstaccountkey=$AZSTACCOUNTKEY --set azstaccountname=$AZSTACCOUNTNAME --set cr_repo=$CR_REPO --set db_host=$DB_HOST --set db_name=$DB_NAME --set db_user=$DB_USER --set db_pass=$DB_PASS --set hosts=$SITE_DOMAIN
 
 dev_build:
   stage: build
@@ -85,6 +85,7 @@ dev_build:
     - *build_image
   tags:
     - docker
+  extends: .dev_ref
 
 dev_db_create:
   stage: build
@@ -102,6 +103,7 @@ dev_db_create:
     - *fs_create
   tags:
     - docker
+  extends: .dev_ref
 
 dev_deploy:
   stage: deploy
@@ -112,22 +114,12 @@ dev_deploy:
     K8S_USER: $DEV_K8S_USER
     K8S_TOKEN: $DEV_K8S_TOKEN
     K8S_CLUSTER: $DEV_K8S_CLUSTER
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    DB_NAME: $CI_PROJECT_NAME
   script:
     - *aks_deploy
   tags:
     - docker
-# dev_dump:
-#   stage: migrations
-#   variables:
-#     ENV: DEV
-#     DB_HOST: $DEV_DB_HOST
-#     DB_ADMIN: $DEV_DB_ADMIN
-#     DB_PASS: $DEV_DB_PASS
-#     DB_NAME: $CI_PROJECT_NAME
-#     ST_ACCOUNT: $DEV_ST_ACCOUNT
-#     ST_KEY: $DEV_ST_KEY
-#     ST_CONTAINER: $CI_PROJECT_NAME
-#   extends:
-#     - .dump
-#   tags:
-#     - docker
+  extends: .dev_ref
