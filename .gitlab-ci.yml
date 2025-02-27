@@ -85,6 +85,9 @@ dev_db_create:
     DB_ADMIN: $DEV_DB_ADMIN
     DB_PASS: $DEV_DB_PASS
     DB_NAME: $CI_PROJECT_NAME
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+    ST_CONTAINER: $CI_PROJECT_NAME
   script:
     - *db_create
     - *fs_create
