@@ -11,16 +11,16 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  {{- $relname := .Values.app_name -}}
-  {{- range .Values.hosts }}
-  - host: {{ . }}
+  # {{- $relname := .Values.app_name -}}
+  # {{- range .Values.hosts }}
+  - host: {{ .Values.hosts }}
     http:
       paths:
       - pathType: Prefix
         path: "/"
         backend:
           service:
-            name: {{ $relname }}
+            name: {{ .Values.app_name }}
             port: 
               number: 80
-  {{- end }}
+  # {{- end }}
