@@ -2,28 +2,37 @@ image: chinmaymjog/cicd-toolkit:latest
 
 before_script:
   - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
-  - case "$CI_COMMIT_REF_NAME" in
-    "$CI_DEFAULT_BRANCH") ENV="preprod" ;;
-    v[0-9]*.[0-9]*.[0-9]*) ENV="prod" ;;
-    *) ENV="dev" ;;
-    esac
-
   - |
+    # Determine the environment based on branch/tag
+    case "$CI_COMMIT_REF_NAME" in
+      "$CI_DEFAULT_BRANCH") ENV="preprod" ;;
+      v[0-9]*.[0-9]*.[0-9]*) ENV="prod" ;;
+      *) ENV="dev" ;;
+    esac
+  - |
+    # Define constants
     FS_NAME="lab-k8s"
-    APP_NAME="$ENV-${CI_PROJECT_NAME}"
-    APP_NAMESPACE="$ENV-${CI_PROJECT_NAME}"
+    APP_NAME="$ENV-$CI_PROJECT_NAME"
+    APP_NAMESPACE="$ENV-$CI_PROJECT_NAME"
     APP_DIR="$CI_PROJECT_NAME"
-    DB_NAME="$ENV-${CI_PROJECT_NAME}"
+    DB_NAME="$ENV-$CI_PROJECT_NAME"
+  - |
+    # Set IMAGE_TAG based on environment
+    if [[ "$ENV" == "preprod" ]]; then
+      IMAGE_TAG="preprod"
+      ENV_APP_DIR="$CI_PROJECT_NAME/preprod"
+      SITE_URL="$ENV-$CI_PROJECT_NAME.ilearndevops.in"
+    elif [[ "$ENV" == "prod" ]]; then
+      IMAGE_TAG="latest"
+      ENV_APP_DIR="$CI_PROJECT_NAME/prod"
+      SITE_URL="$SITE_DOMAIN"
+    else
+      IMAGE_TAG="$CI_COMMIT_REF_SLUG"
+      ENV_APP_DIR="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
+      SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
+    fi
 
-    IMAGE_TAG="${ENV/preprod/preprod}"
-    IMAGE_TAG="${ENV/prod/latest}"
-    IMAGE_TAG="${ENV/dev/$CI_COMMIT_REF_SLUG}"
-
-    ENV_APP_DIR="$CI_PROJECT_NAME/${ENV/preprod/preprod}"
-    ENV_APP_DIR="$CI_PROJECT_NAME/${ENV/prod/prod}"
-    ENV_APP_DIR="$CI_PROJECT_NAME/${ENV/dev/$CI_COMMIT_REF_SLUG}"
-
-  - export ENV FS_NAME APP_NAME APP_NAMESPACE APP_DIR DB_NAME IMAGE_TAG ENV_APP_DIR
+  - export ENV IMAGE_TAG FS_NAME APP_NAME APP_NAMESPACE APP_DIR DB_NAME ENV_APP_DIR SITE_URL
 
 variables:
   DOCKER_HOST: tcp://docker:2376
@@ -39,21 +48,21 @@ stages:
 .dev_ref:
   environment:
     name: "development"
-    url: "http://$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
+    url: "https://$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
 
 .preprod_ref:
   environment:
-    name: "pre-production"
-    url: "http://preprod-$CI_PROJECT_NAME.ilearndevops.in"
+    name: "preprod"
+    url: "https://$ENV-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 .prod_ref:
   environment:
     name: "production"
-    url: "http://$SITE_DOMAIN"
+    url: "https://$SITE_DOMAIN"
   rules:
     - if: $CI_COMMIT_TAG == "v\d\.\d\.\d"
 

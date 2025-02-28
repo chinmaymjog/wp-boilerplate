@@ -36,7 +36,7 @@ spec:
             subPath: {{ .Values.app.pvc_path }}/uploads
           - mountPath: /usr/src/wordpress/.htaccess
             name: nfs-mount
-            subPath: {{ .Values.app.pvc_path }}/htaccess
+            subPath: {{ .Values.app.pvc_path }}/.htaccess
       imagePullSecrets:
         - name: cr-auth
       volumes:
