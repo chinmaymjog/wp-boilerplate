@@ -21,7 +21,7 @@ before_script:
     if [[ "$ENV" == "preprod" ]]; then
       IMAGE_TAG="preprod"
       ENV_APP_DIR="$CI_PROJECT_NAME/preprod"
-      SITE_URL="http://$CI_PROJECT_NAME.ilearndevops.in"
+      SITE_URL="http://$ENV-$CI_PROJECT_NAME.ilearndevops.in"
     elif [[ "$ENV" == "prod" ]]; then
       IMAGE_TAG="latest"
       ENV_APP_DIR="$CI_PROJECT_NAME/prod"
@@ -29,7 +29,7 @@ before_script:
     else
       IMAGE_TAG="$CI_COMMIT_REF_SLUG"
       ENV_APP_DIR="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
-      SITE_URL="http://$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
+      SITE_URL="http://$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
     fi
 
   - export ENV IMAGE_TAG FS_NAME APP_NAME APP_NAMESPACE APP_DIR DB_NAME ENV_APP_DIR SITE_URL
