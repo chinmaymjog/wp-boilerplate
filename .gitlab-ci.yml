@@ -78,10 +78,10 @@ stages:
   - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
 .fs_create: &fs_create
-  - cat $HTACCESS_FILE > htaccess
-  - ls -l && cat htaccess
-  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $DIR_NAME --file htaccess
-  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $ENV_DIR_NAME --file htaccess
+  - cat $HTACCESS_FILE > .htaccess
+  - ls -l && cat .htaccess
+  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $DIR_NAME --file .htaccess
+  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $ENV_DIR_NAME --file .htaccess
 
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
