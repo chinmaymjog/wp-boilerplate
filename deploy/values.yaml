@@ -11,12 +11,6 @@ image:
   repository: $CI_PROJECT_NAME
   tag: $IMAGE_TAG
 
-auth:
-  basic_auth: $BASIC_AUTH
-  cr_auth: $CR_AUTH
-  azstaccountkey: $AZSTACCOUNTKEY
-  azstaccountname: $AZSTACCOUNTNAME
-
 database:
   db_host: $DB_HOST
   db_name: $DB_NAME
