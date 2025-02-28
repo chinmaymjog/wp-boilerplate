@@ -94,7 +94,7 @@ stages:
   - kubectl get nodes
   - envsubst < ./deploy/values.yaml > ./deploy/$ENV-values.yaml
   - cat ./deploy/$ENV-values.yaml
-  - helm upgrade --install $CI_PROJECT_NAME ./deploy -f /deploy/$ENV-values.yaml
+  - helm upgrade --install $CI_PROJECT_NAME ./deploy -f ./deploy/$ENV-values.yaml
 
 dev_build:
   stage: build
