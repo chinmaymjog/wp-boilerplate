@@ -176,38 +176,6 @@ preprod_db_create:
     - docker
   extends: .preprod_ref
 
-# preprod_db_dump:
-#   stage: migrations
-#   variables:
-#     DB_HOST: $DEV_DB_HOST
-#     DB_ADMIN: $DEV_DB_ADMIN
-#     DB_PASS: $DEV_DB_PASS
-#     ST_ACCOUNT: $DEV_ST_ACCOUNT
-#     ST_KEY: $DEV_ST_KEY
-#   script:
-#     - *db_dump
-#   tags:
-#     - docker
-#   extends: .preprod_ref
-
-# migrate_from_dev:
-#   stage: migrations
-#   variables:
-#     DB_HOST: $DEV_DB_HOST
-#     DB_ADMIN: $DEV_DB_ADMIN
-#     DB_PASS: $DEV_DB_PASS
-#     ST_ACCOUNT: $DEV_ST_ACCOUNT
-#     ST_KEY: $DEV_ST_KEY
-#     SOURCE_URL: $DEV_SOURCE_URL
-#     TARGET_URL: $DEV_TARGET_URL
-#   script:
-#     - *db_dump
-#     - *db_restore
-#     - *db_migrate
-#   tags:
-#     - docker
-#   extends: .preprod_ref
-
 preprod_deploy:
   stage: deploy
   variables:
@@ -224,3 +192,45 @@ preprod_deploy:
   tags:
     - docker
   extends: .preprod_ref
+
+prod_build:
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - *build_image
+  tags:
+    - docker
+  extends: .prod_ref
+
+prod_db_create:
+  stage: build
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+  script:
+    - *db_create
+    - *fs_create
+  tags:
+    - docker
+  extends: .prod_ref
+
+prod_deploy:
+  stage: deploy
+  variables:
+    K8S_SERVER: $DEV_K8S_SERVER
+    K8S_CA: $DEV_K8S_CA
+    K8S_USER: $DEV_K8S_USER
+    K8S_TOKEN: $DEV_K8S_TOKEN
+    K8S_CLUSTER: $DEV_K8S_CLUSTER
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+  script:
+    - *aks_deploy
+  tags:
+    - docker
+  extends: .prod_ref
