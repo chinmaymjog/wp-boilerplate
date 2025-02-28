@@ -1,19 +1,20 @@
 image: chinmaymjog/cicd-toolkit:latest
 
 before_script:
+  - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
   - |
     case "$CI_COMMIT_REF_NAME" in
       "$CI_DEFAULT_BRANCH")
         ENV="preprod"
         IMAGE_TAG="preprod"
         DB_NAME="preprod-$CI_PROJECT_NAME"
-        DIR_NAME="$CI_PROJECT_NAME/preprod-$CI_PROJECT_NAME"
+        DIR_NAME="$CI_PROJECT_NAME/preprod"
         ;;
       v[0-9]*.[0-9]*.[0-9]*)
         ENV="prod"
         IMAGE_TAG="latest"
         DB_NAME="prod-$CI_PROJECT_NAME"
-        DIR_NAME="$CI_PROJECT_NAME/prod-$CI_PROJECT_NAME"
+        DIR_NAME="$CI_PROJECT_NAME/prod"
         ;;
       *)
         ENV="dev"
@@ -68,7 +69,7 @@ stages:
 
 .fs_create: &fs_create
   - cat $HTACCESS_FILE > htaccess
-  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $DIR_NAME --file htaccess
+  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $DIR_NAME --file htaccess
 
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
@@ -84,8 +85,6 @@ stages:
   - helm upgrade --install $CI_PROJECT_NAME ./deploy -f /deploy/$ENV-values.yaml
 
 dev_build:
-  before_script:
-    - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
   variables:
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_CERTDIR: "/certs"
@@ -108,6 +107,7 @@ dev_db_create:
     DB_PASS: $DEV_DB_PASS
     ST_ACCOUNT: $DEV_ST_ACCOUNT
     ST_KEY: $DEV_ST_KEY
+    FS_NAME: "lab-k8s"
   script:
     - *db_create
     - *fs_create
