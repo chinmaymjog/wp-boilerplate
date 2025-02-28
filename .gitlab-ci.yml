@@ -233,7 +233,7 @@ stop_preprod:
     K8S_CLUSTER: $DEV_K8S_CLUSTER
   script:
     - *stop_env
-  extends: .dev_ref
+  extends: .preprod_ref
 
 dump_preprod:
   stage: migrations
@@ -246,7 +246,7 @@ dump_preprod:
     ST_CONTAINER: $APP_DIR
   script:
     - *db_dump
-  extends: .dev_ref
+  extends: .preprod_ref
 
 migrate_prod_preprod:
   stage: migrations
@@ -262,7 +262,7 @@ migrate_prod_preprod:
   script:
     - *db_restore
     - *db_migrate
-  extends: .dev_ref
+  extends: .preprod_ref
 
 preprod_deploy:
   stage: deploy
