@@ -1,13 +1,28 @@
 image: chinmaymjog/cicd-toolkit:latest
 
 before_script:
-  - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
-
-variables:
-  DOCKER_HOST: tcp://docker:2376
-  DOCKER_TLS_CERTDIR: "/certs"
-  DOCKER_TLS_VERIFY: 1
-  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  - |
+    case "$CI_COMMIT_REF_NAME" in
+      "$CI_DEFAULT_BRANCH")
+        ENV="preprod"
+        IMAGE_TAG="preprod"
+        DB_NAME="preprod-$CI_PROJECT_NAME"
+        ST_CONTAINER="$CI_PROJECT_NAME/preprod-$CI_PROJECT_NAME"
+        ;;
+      v[0-9]*.[0-9]*.[0-9]*)
+        ENV="prod"
+        IMAGE_TAG="latest"
+        DB_NAME="prod-$CI_PROJECT_NAME"
+        ST_CONTAINER="$CI_PROJECT_NAME/prod-$CI_PROJECT_NAME"
+        ;;
+      *)
+        ENV="dev"
+        IMAGE_TAG="$CI_COMMIT_REF_SLUG"
+        DB_NAME="$CI_COMMIT_REF_SLUG"
+        ST_CONTAINER="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
+        ;;
+    esac
+  - export ENV IMAGE_TAG DB_NAME ST_CONTAINER
 
 stages:
   - build
@@ -17,18 +32,16 @@ stages:
 .dev_ref:
   environment:
     name: "development"
-    url: "http://$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
+    url: "http://$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
-      when: manual
 
 .preprod_ref:
   environment:
     name: "pre-production"
-    url: "http://$CI_COMMIT_BRANCH-$CI_PROJECT_NAME.ilearndevops.in"
+    url: "http://preprod-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
 
 .prod_ref:
   environment:
@@ -36,19 +49,10 @@ stages:
     url: "http://$SITE_DOMAIN"
   rules:
     - if: $CI_COMMIT_TAG == "v\d\.\d\.\d"
-      when: manual
 
 .build_image: &build_image
-  - |
-    if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-      tag=""
-      echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
-    else
-      tag=":$CI_COMMIT_REF_SLUG"
-      echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
-    fi
-  - docker build --pull -t "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}" .
-  - docker push "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME${tag}"
+  - docker build --pull -t "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME:$IMAGE_TAG" .
+  - docker push "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME:$IMAGE_TAG"
 
 .db_create: &db_create
   - db-create --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME
@@ -63,8 +67,8 @@ stages:
   - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
 .fs_create: &fs_create
-  - cat $HTACCESS_FILE > .htaccess
-  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $CI_COMMIT_REF_SLUG --file .htaccess
+  - cat $HTACCESS_FILE > htaccess
+  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $ENV/$DIR_NAME --file htaccess
 
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
@@ -75,9 +79,18 @@ stages:
   - kubectl config set-context $K8S_CLUSTER --cluster=$K8S_CLUSTER --user=$K8S_USER
   - kubectl config use-context $K8S_CLUSTER
   - kubectl get nodes
-  - helm upgrade --install $CI_PROJECT_NAME ./deploy --set app_name=$CI_COMMIT_REF_SLUG --set basic_auth=$BASIC_AUTH --set cr_auth=$CR_AUTH --set azstaccountkey=$AZSTACCOUNTKEY --set azstaccountname=$AZSTACCOUNTNAME --set cr_repo=$CR_REPO --set db_host=$DB_HOST --set db_name=$DB_NAME --set db_user=$DB_USER --set db_pass=$DB_PASS --set hosts=$SITE_DOMAIN
+  - envsubst < ./deploy/values.yaml > ./deploy/$ENV-values.yaml
+  - cat ./deploy/$ENV-values.yaml
+  - helm upgrade --install $CI_PROJECT_NAME ./deploy -f /deploy/$ENV-values.yaml
 
 dev_build:
+  before_script:
+    - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
   stage: build
   services:
     - docker:dind
@@ -90,14 +103,11 @@ dev_build:
 dev_db_create:
   stage: build
   variables:
-    ENV: DEV
     DB_HOST: $DEV_DB_HOST
     DB_ADMIN: $DEV_DB_ADMIN
     DB_PASS: $DEV_DB_PASS
-    DB_NAME: $CI_PROJECT_NAME
     ST_ACCOUNT: $DEV_ST_ACCOUNT
     ST_KEY: $DEV_ST_KEY
-    ST_CONTAINER: $CI_PROJECT_NAME
   script:
     - *db_create
     - *fs_create
@@ -108,7 +118,6 @@ dev_db_create:
 dev_deploy:
   stage: deploy
   variables:
-    ENV: DEV
     K8S_SERVER: $DEV_K8S_SERVER
     K8S_CA: $DEV_K8S_CA
     K8S_USER: $DEV_K8S_USER
@@ -117,9 +126,89 @@ dev_deploy:
     DB_HOST: $DEV_DB_HOST
     DB_ADMIN: $DEV_DB_ADMIN
     DB_PASS: $DEV_DB_PASS
-    DB_NAME: $CI_PROJECT_NAME
   script:
     - *aks_deploy
   tags:
     - docker
   extends: .dev_ref
+
+preprod_build:
+  before_script:
+    - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - *build_image
+  tags:
+    - docker
+  extends: .dev_ref
+
+preprod_db_create:
+  stage: build
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+  script:
+    - *db_create
+    - *fs_create
+  tags:
+    - docker
+  extends: .preprod_ref
+
+# preprod_db_dump:
+#   stage: migrations
+#   variables:
+#     DB_HOST: $DEV_DB_HOST
+#     DB_ADMIN: $DEV_DB_ADMIN
+#     DB_PASS: $DEV_DB_PASS
+#     ST_ACCOUNT: $DEV_ST_ACCOUNT
+#     ST_KEY: $DEV_ST_KEY
+#   script:
+#     - *db_dump
+#   tags:
+#     - docker
+#   extends: .preprod_ref
+
+# migrate_from_dev:
+#   stage: migrations
+#   variables:
+#     DB_HOST: $DEV_DB_HOST
+#     DB_ADMIN: $DEV_DB_ADMIN
+#     DB_PASS: $DEV_DB_PASS
+#     ST_ACCOUNT: $DEV_ST_ACCOUNT
+#     ST_KEY: $DEV_ST_KEY
+#     SOURCE_URL: $DEV_SOURCE_URL
+#     TARGET_URL: $DEV_TARGET_URL
+#   script:
+#     - *db_dump
+#     - *db_restore
+#     - *db_migrate
+#   tags:
+#     - docker
+#   extends: .preprod_ref
+
+preprod_deploy:
+  stage: deploy
+  variables:
+    K8S_SERVER: $DEV_K8S_SERVER
+    K8S_CA: $DEV_K8S_CA
+    K8S_USER: $DEV_K8S_USER
+    K8S_TOKEN: $DEV_K8S_TOKEN
+    K8S_CLUSTER: $DEV_K8S_CLUSTER
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+  script:
+    - *aks_deploy
+  tags:
+    - docker
+  extends: .preprod_ref

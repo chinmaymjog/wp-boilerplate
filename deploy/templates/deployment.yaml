@@ -14,16 +14,16 @@ spec:
     spec:
       containers:
       - name: {{ .Values.app_name }}
-        image: {{ .Values.cr_repo }}/{{ .Values.app_name }}:{{ .Values.image_tag }}
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
         env:
         - name: WORDPRESS_DB_HOST
-          value: {{ .Values.db_host }}
+          value: {{ .Values.database.db_host }}
         - name: WORDPRESS_DB_NAME
-          value: {{ .Values.db_name }}
+          value: {{ .Values.database.db_name }}
         - name: WORDPRESS_DB_USER
-          value: {{ .Values.db_user }}
+          value: {{ .Values.database.db_user }}
         - name: WORDPRESS_DB_PASSWORD       
-          value: {{ .Values.db_pass }}  
+          value: {{ .Values.database.db_pass }}  
         resources:
           limits:
             memory: "128Mi"
@@ -33,10 +33,10 @@ spec:
         volumeMounts:
           - mountPath: /usr/src/wordpress/wp-content/uploads
             name: nfs-mount
-            subPath: uploads
+            subPath: {{ .Values.app_name }}/{{ .Values.env }}/uploads
           - mountPath: /usr/src/wordpress/.htaccess
             name: nfs-mount
-            subPath: htaccess
+            subPath: {{ .Values.app_name }}/{{ .Values.env }}/htaccess
       imagePullSecrets:
         - name: cr-auth
       volumes:

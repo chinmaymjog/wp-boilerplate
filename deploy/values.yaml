@@ -1,12 +1,20 @@
 app_name: $CI_PROJECT_NAME
-image_tag: $CI_COMMIT_REF_SLUG
-basic_auth: $BASIC_AUTH
-cr_auth: $CR_AUTH
-azstaccountkey: $AZSTACCOUNTKEY
-azstaccountname: $AZSTACCOUNTNAME
-cr_repo: $CR_REPO
-db_host: $DB_HOST
-db_name: $DB_NAME
-db_user: $DB_USER
-db_pass: $DB_PASS
+env: $ENV
 hosts: $SITE_DOMAIN
+
+image:
+  registry: $CR_REPO
+  repository: $CI_PROJECT_NAME
+  tag: $IMAGE_TAG
+
+auth:
+  basic_auth: $BASIC_AUTH
+  cr_auth: $CR_AUTH
+  azstaccountkey: $AZSTACCOUNTKEY
+  azstaccountname: $AZSTACCOUNTNAME
+
+database:
+  db_host: $DB_HOST
+  db_name: $DB_NAME
+  db_user: $DB_ADMIN
+  db_pass: $DB_PASS
