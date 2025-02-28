@@ -21,15 +21,15 @@ before_script:
     if [[ "$ENV" == "preprod" ]]; then
       IMAGE_TAG="preprod"
       ENV_APP_DIR="$CI_PROJECT_NAME/preprod"
-      SITE_URL="http://$ENV-$CI_PROJECT_NAME.ilearndevops.in"
+      SITE_URL="$ENV-$CI_PROJECT_NAME.ilearndevops.in"
     elif [[ "$ENV" == "prod" ]]; then
       IMAGE_TAG="latest"
       ENV_APP_DIR="$CI_PROJECT_NAME/prod"
-      SITE_URL="http://$SITE_DOMAIN"
+      SITE_URL="$SITE_DOMAIN"
     else
       IMAGE_TAG="$CI_COMMIT_REF_SLUG"
       ENV_APP_DIR="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
-      SITE_URL="http://$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
+      SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
     fi
 
   - export ENV IMAGE_TAG FS_NAME APP_NAME APP_NAMESPACE APP_DIR DB_NAME ENV_APP_DIR SITE_URL
@@ -48,21 +48,21 @@ stages:
 .dev_ref:
   environment:
     name: "development"
-    url: "http://$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
+    url: "https://$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
 
 .preprod_ref:
   environment:
     name: "preprod"
-    url: "http://preprod-$CI_PROJECT_NAME.ilearndevops.in"
+    url: "https://$ENV-$CI_PROJECT_NAME.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 .prod_ref:
   environment:
     name: "production"
-    url: "http://$SITE_DOMAIN"
+    url: "https://$SITE_DOMAIN"
   rules:
     - if: $CI_COMMIT_TAG == "v\d\.\d\.\d"
 
