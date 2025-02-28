@@ -101,10 +101,10 @@ stages:
   - kubectl config use-context $K8S_CLUSTER
   - envsubst < ./deploy/namespace.yaml > ./deploy/$APP_NAME-namespace.yaml
   - cat ./deploy/$APP_NAME-namespace.yaml
-  - kubectl apply -f ./deploy/$APP_NAME-namespace.yaml
+  - kubectl apply -f ./deploy/$APP_NAME-namespace.yaml --namespace $APP_NAMESPACE
   - envsubst < ./deploy/secret.yaml > ./deploy/$APP_NAME-secret.yaml
   - cat ./deploy/$APP_NAME-secret.yaml
-  - kubectl apply -f ./deploy/$APP_NAME-secret.yaml
+  - kubectl apply -f ./deploy/$APP_NAME-secret.yaml --namespace $APP_NAMESPACE
   - envsubst < ./deploy/values.yaml > ./deploy/$APP_NAME-values.yaml
   - cat ./deploy/$APP_NAME-values.yaml
   - helm upgrade --install $APP_NAME --namespace $APP_NAMESPACE --create-namespace ./deploy -f ./deploy/$APP_NAME-values.yaml
