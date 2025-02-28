@@ -13,6 +13,7 @@ before_script:
     # Define constants
     FS_NAME="lab-k8s"
     APP_DIR="$CI_PROJECT_NAME"
+    APP_NAMESPACE="$CI_PROJECT_NAME"
     DB_NAME="$ENV-$CI_PROJECT_NAME"
   - |
     # Set IMAGE_TAG based on environment
@@ -33,7 +34,7 @@ before_script:
       SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
     fi
 
-  - export ENV IMAGE_TAG FS_NAME APP_NAME APP_DIR DB_NAME ENV_APP_DIR SITE_URL
+  - export ENV IMAGE_TAG FS_NAME APP_NAME APP_DIR APP_NAMESPACE DB_NAME ENV_APP_DIR SITE_URL
 
 variables:
   DOCKER_HOST: tcp://docker:2376
@@ -100,7 +101,7 @@ stages:
   - kubectl config use-context $K8S_CLUSTER
   - envsubst < ./deploy/values.yaml > ./deploy/$ENV-values.yaml
   - cat ./deploy/$ENV-values.yaml
-  - helm upgrade --install $APP_NAME ./deploy -f ./deploy/$ENV-values.yaml
+  - helm upgrade --install $APP_NAME --namespace $APP_NAMESPACE --create-namespace ./deploy -f ./deploy/$ENV-values.yaml
 
 dev_build:
   stage: build
