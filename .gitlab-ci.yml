@@ -156,6 +156,7 @@ preprod_db_create:
     DB_PASS: $DEV_DB_PASS
     ST_ACCOUNT: $DEV_ST_ACCOUNT
     ST_KEY: $DEV_ST_KEY
+    FS_NAME: "lab-k8s"
   script:
     - *db_create
     - *fs_create
