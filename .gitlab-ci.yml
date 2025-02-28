@@ -12,7 +12,6 @@ before_script:
   - |
     # Define constants
     FS_NAME="lab-k8s"
-    APP_NAMESPACE="$ENV-$CI_PROJECT_NAME"
     APP_DIR="$CI_PROJECT_NAME"
     DB_NAME="$ENV-$CI_PROJECT_NAME"
   - |
@@ -34,7 +33,7 @@ before_script:
       SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
     fi
 
-  - export ENV IMAGE_TAG FS_NAME APP_NAME APP_NAMESPACE APP_DIR DB_NAME ENV_APP_DIR SITE_URL
+  - export ENV IMAGE_TAG FS_NAME APP_NAME APP_DIR DB_NAME ENV_APP_DIR SITE_URL
 
 variables:
   DOCKER_HOST: tcp://docker:2376
