@@ -1,6 +1,8 @@
-app_name: $CI_PROJECT_NAME
-env: $ENV
-hosts: $SITE_DOMAIN
+app:
+  name: $APP_NAME
+  namespace: $APP_NAMESPACE
+  hosts: $SITE_DOMAIN
+
 file_share: $FS_NAME
 
 image:
