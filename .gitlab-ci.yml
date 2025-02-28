@@ -8,22 +8,31 @@ before_script:
         ENV="preprod"
         IMAGE_TAG="preprod"
         DB_NAME="preprod-$CI_PROJECT_NAME"
-        DIR_NAME="$CI_PROJECT_NAME/preprod"
+        DIR_NAME="$CI_PROJECT_NAME"
+        ENV_DIR_NAME="$CI_PROJECT_NAME/preprod"
         ;;
       v[0-9]*.[0-9]*.[0-9]*)
         ENV="prod"
         IMAGE_TAG="latest"
         DB_NAME="prod-$CI_PROJECT_NAME"
-        DIR_NAME="$CI_PROJECT_NAME/prod"
+        DIR_NAME="$CI_PROJECT_NAME"
+        ENV_DIR_NAME="$CI_PROJECT_NAME/prod"
         ;;
       *)
         ENV="dev"
         IMAGE_TAG="$CI_COMMIT_REF_SLUG"
         DB_NAME="$CI_COMMIT_REF_SLUG"
-        DIR_NAME="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
+        DIR_NAME="$CI_PROJECT_NAME"
+        ENV_DIR_NAME="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
         ;;
     esac
   - export ENV IMAGE_TAG DB_NAME DIR_NAME
+
+variables:
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
 
 stages:
   - build
@@ -52,6 +61,7 @@ stages:
     - if: $CI_COMMIT_TAG == "v\d\.\d\.\d"
 
 .build_image: &build_image
+  - echo $IMAGE_TAG
   - docker build -t "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME:$IMAGE_TAG" .
   - docker push "$DOCKER_REGISTRY_NAME/$CI_PROJECT_NAME:$IMAGE_TAG"
 
@@ -70,6 +80,7 @@ stages:
 .fs_create: &fs_create
   - cat $HTACCESS_FILE > htaccess
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $DIR_NAME --file htaccess
+  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $ENV_DIR_NAME --file htaccess
 
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
@@ -85,11 +96,6 @@ stages:
   - helm upgrade --install $CI_PROJECT_NAME ./deploy -f /deploy/$ENV-values.yaml
 
 dev_build:
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
   stage: build
   services:
     - docker:dind
@@ -133,13 +139,6 @@ dev_deploy:
   extends: .dev_ref
 
 preprod_build:
-  before_script:
-    - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
   stage: build
   services:
     - docker:dind
