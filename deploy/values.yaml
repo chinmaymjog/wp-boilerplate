@@ -1,7 +1,7 @@
 app:
   name: $APP_NAME
   namespace: $APP_NAMESPACE
-  hosts: $SITE_DOMAIN
+  hosts: $SITE_URL
   pvc_path: $ENV_APP_DIR
 
 pvc:
