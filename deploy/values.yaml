@@ -2,8 +2,10 @@ app:
   name: $APP_NAME
   namespace: $APP_NAMESPACE
   hosts: $SITE_DOMAIN
+  pvc_path: $ENV_APP_DIR
 
-file_share: $FS_NAME
+pvc:
+  share: $FS_NAME
 
 image:
   registry: $CR_REPO
