@@ -14,23 +14,25 @@ before_script:
     FS_NAME="lab-k8s"
     APP_DIR="$CI_PROJECT_NAME"
     APP_NAMESPACE="$CI_PROJECT_NAME"
-    DB_NAME="$ENV-$CI_PROJECT_NAME"
   - |
     # Set IMAGE_TAG based on environment
     if [[ "$ENV" == "preprod" ]]; then
       IMAGE_TAG="preprod"
       APP_NAME="$ENV-$CI_PROJECT_NAME"
       ENV_APP_DIR="$CI_PROJECT_NAME/preprod"
+      DB_NAME="$ENV-$CI_PROJECT_NAME"
       SITE_URL="$ENV-$CI_PROJECT_NAME.ilearndevops.in"
     elif [[ "$ENV" == "prod" ]]; then
       IMAGE_TAG="latest"
       APP_NAME="$ENV-$CI_PROJECT_NAME"
       ENV_APP_DIR="$CI_PROJECT_NAME/prod"
+      DB_NAME="$ENV-$CI_PROJECT_NAME"
       SITE_URL="$SITE_DOMAIN"
     else
       IMAGE_TAG="$CI_COMMIT_REF_SLUG"
       APP_NAME="$ENV-$CI_COMMIT_REF_SLUG"
       ENV_APP_DIR="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
+      DB_NAME="$ENV-$CI_COMMIT_REF_SLUG"
       SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
     fi
 
