@@ -79,7 +79,7 @@ stages:
 
 .fs_create: &fs_create
   - cat $HTACCESS_FILE > htaccess
-  - ls -l && cat .htaccess
+  - ls -l && cat htaccess
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $DIR_NAME --file htaccess
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $FS_NAME --dir $ENV_DIR_NAME --file htaccess
 
