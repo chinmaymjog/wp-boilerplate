@@ -7,22 +7,22 @@ before_script:
         ENV="preprod"
         IMAGE_TAG="preprod"
         DB_NAME="preprod-$CI_PROJECT_NAME"
-        ST_CONTAINER="$CI_PROJECT_NAME/preprod-$CI_PROJECT_NAME"
+        DIR_NAME="$CI_PROJECT_NAME/preprod-$CI_PROJECT_NAME"
         ;;
       v[0-9]*.[0-9]*.[0-9]*)
         ENV="prod"
         IMAGE_TAG="latest"
         DB_NAME="prod-$CI_PROJECT_NAME"
-        ST_CONTAINER="$CI_PROJECT_NAME/prod-$CI_PROJECT_NAME"
+        DIR_NAME="$CI_PROJECT_NAME/prod-$CI_PROJECT_NAME"
         ;;
       *)
         ENV="dev"
         IMAGE_TAG="$CI_COMMIT_REF_SLUG"
         DB_NAME="$CI_COMMIT_REF_SLUG"
-        ST_CONTAINER="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
+        DIR_NAME="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
         ;;
     esac
-  - export ENV IMAGE_TAG DB_NAME ST_CONTAINER
+  - export ENV IMAGE_TAG DB_NAME DIR_NAME
 
 stages:
   - build
@@ -68,7 +68,7 @@ stages:
 
 .fs_create: &fs_create
   - cat $HTACCESS_FILE > htaccess
-  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $ENV/$DIR_NAME --file htaccess
+  - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfileshare $CI_PROJECT_NAME --dir $DIR_NAME --file htaccess
 
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
@@ -147,7 +147,7 @@ preprod_build:
     - *build_image
   tags:
     - docker
-  extends: .dev_ref
+  extends: .preprod_ref
 
 preprod_db_create:
   stage: build
