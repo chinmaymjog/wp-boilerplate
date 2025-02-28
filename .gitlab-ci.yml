@@ -133,6 +133,7 @@ dev_deploy:
     DB_HOST: $DEV_DB_HOST
     DB_ADMIN: $DEV_DB_ADMIN
     DB_PASS: $DEV_DB_PASS
+    FS_NAME: "lab-k8s"
   script:
     - *aks_deploy
   tags:
@@ -208,6 +209,7 @@ preprod_deploy:
     DB_HOST: $DEV_DB_HOST
     DB_ADMIN: $DEV_DB_ADMIN
     DB_PASS: $DEV_DB_PASS
+    FS_NAME: "lab-k8s"
   script:
     - *aks_deploy
   tags:

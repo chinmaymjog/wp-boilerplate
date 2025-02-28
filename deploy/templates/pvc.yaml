@@ -10,7 +10,7 @@ spec:
     - ReadWriteMany
   azureFile:
     secretName: azure-secret
-    shareName: {{ .Values.app_name }}
+    shareName: {{ .Values.file_share }}
     readOnly: false
   persistentVolumeReclaimPolicy: Retain
 ---
