@@ -1,6 +1,5 @@
 app:
   name: $APP_NAME
-  namespace: $APP_NAMESPACE
   hosts: $SITE_URL
   pvc_path: $ENV_APP_DIR
 
@@ -11,12 +10,6 @@ image:
   registry: $CR_REPO
   repository: $CI_PROJECT_NAME
   tag: $IMAGE_TAG
-
-auth:
-  basic_auth: $BASIC_AUTH
-  cr_auth: $CR_AUTH
-  azstaccountkey: $AZSTACCOUNTKEY
-  azstaccountname: $AZSTACCOUNTNAME
 
 database:
   db_host: $DB_HOST

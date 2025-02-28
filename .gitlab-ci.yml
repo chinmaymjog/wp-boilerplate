@@ -12,27 +12,29 @@ before_script:
   - |
     # Define constants
     FS_NAME="lab-k8s"
-    APP_NAME="$ENV-$CI_PROJECT_NAME"
-    APP_NAMESPACE="$ENV-$CI_PROJECT_NAME"
     APP_DIR="$CI_PROJECT_NAME"
+    APP_NAMESPACE="$CI_PROJECT_NAME"
     DB_NAME="$ENV-$CI_PROJECT_NAME"
   - |
     # Set IMAGE_TAG based on environment
     if [[ "$ENV" == "preprod" ]]; then
       IMAGE_TAG="preprod"
+      APP_NAME="$ENV-$CI_PROJECT_NAME"
       ENV_APP_DIR="$CI_PROJECT_NAME/preprod"
       SITE_URL="$ENV-$CI_PROJECT_NAME.ilearndevops.in"
     elif [[ "$ENV" == "prod" ]]; then
       IMAGE_TAG="latest"
+      APP_NAME="$ENV-$CI_PROJECT_NAME"
       ENV_APP_DIR="$CI_PROJECT_NAME/prod"
       SITE_URL="$SITE_DOMAIN"
     else
       IMAGE_TAG="$CI_COMMIT_REF_SLUG"
+      APP_NAME="$ENV-$CI_COMMIT_REF_SLUG"
       ENV_APP_DIR="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG"
       SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.ilearndevops.in"
     fi
 
-  - export ENV IMAGE_TAG FS_NAME APP_NAME APP_NAMESPACE APP_DIR DB_NAME ENV_APP_DIR SITE_URL
+  - export ENV IMAGE_TAG FS_NAME APP_NAME APP_DIR APP_NAMESPACE DB_NAME ENV_APP_DIR SITE_URL
 
 variables:
   DOCKER_HOST: tcp://docker:2376
@@ -97,9 +99,15 @@ stages:
   - kubectl config set-credentials $K8S_USER --token=$K8S_TOKEN
   - kubectl config set-context $K8S_CLUSTER --cluster=$K8S_CLUSTER --user=$K8S_USER
   - kubectl config use-context $K8S_CLUSTER
-  - envsubst < ./deploy/values.yaml > ./deploy/$ENV-values.yaml
-  - cat ./deploy/$ENV-values.yaml
-  - helm upgrade --install $CI_PROJECT_NAME ./deploy -f ./deploy/$ENV-values.yaml
+  - envsubst < ./deploy/namespace.yaml > ./deploy/$APP_NAME-namespace.yaml
+  - cat ./deploy/$APP_NAME-namespace.yaml
+  - kubectl apply -f ./deploy/$APP_NAME-namespace.yaml
+  - envsubst < ./deploy/secret.yaml > ./deploy/$APP_NAME-secret.yaml
+  - cat ./deploy/$APP_NAME-secret.yaml
+  - kubectl apply -f ./deploy/$APP_NAME-secret.yaml
+  - envsubst < ./deploy/values.yaml > ./deploy/$APP_NAME-values.yaml
+  - cat ./deploy/$APP_NAME-values.yaml
+  - helm upgrade --install $APP_NAME --namespace $APP_NAMESPACE --create-namespace ./deploy -f ./deploy/$APP_NAME-values.yaml
 
 dev_build:
   stage: build
