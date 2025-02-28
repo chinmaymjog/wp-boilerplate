@@ -1,7 +1,7 @@
 app_name: $CI_PROJECT_NAME
 env: $ENV
 hosts: $SITE_DOMAIN
-file_share: $FILE_SHARE
+file_share: $FS_NAME
 
 image:
   registry: $CR_REPO
