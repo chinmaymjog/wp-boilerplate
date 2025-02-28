@@ -46,6 +46,7 @@ variables:
 
 stages:
   - build
+  - stop_env
   - migrations
   - deploy
 
@@ -55,6 +56,8 @@ stages:
     url: "https://$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.apps.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
+  tags:
+    - docker
 
 .preprod_ref:
   environment:
@@ -62,6 +65,8 @@ stages:
     url: "https://$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  tags:
+    - docker
 
 .prod_ref:
   environment:
@@ -69,6 +74,8 @@ stages:
     url: "https://$CI_PROJECT_NAME.apps.ilearndevops.in"
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+  tags:
+    - docker
 
 .build_image: &build_image
   - echo $IMAGE_TAG
@@ -111,14 +118,19 @@ stages:
   - cat ./deploy/$APP_NAME-values.yaml
   - helm upgrade --install $APP_NAME --namespace $APP_NAMESPACE --create-namespace ./deploy -f ./deploy/$APP_NAME-values.yaml
 
+.stop_env: &stop_env
+  - kubectl config set-cluster $K8S_CLUSTER --server=$K8S_SERVER --certificate-authority=$K8S_CA
+  - kubectl config set-credentials $K8S_USER --token=$K8S_TOKEN
+  - kubectl config set-context $K8S_CLUSTER --cluster=$K8S_CLUSTER --user=$K8S_USER
+  - kubectl config use-context $K8S_CLUSTER
+  - kubectl scale -n $APP_NAMESPACE deployment/$APP_NAME --replicas 0
+
 dev_build:
   stage: build
   services:
     - docker:dind
   script:
     - *build_image
-  tags:
-    - docker
   extends: .dev_ref
 
 dev_db_create:
@@ -132,8 +144,47 @@ dev_db_create:
   script:
     - *db_create
     - *fs_create
-  tags:
-    - docker
+  extends: .dev_ref
+
+stop_dev:
+  stage: stop_env
+  variables:
+    K8S_SERVER: $DEV_K8S_SERVER
+    K8S_CA: $DEV_K8S_CA
+    K8S_USER: $DEV_K8S_USER
+    K8S_TOKEN: $DEV_K8S_TOKEN
+    K8S_CLUSTER: $DEV_K8S_CLUSTER
+  script:
+    - *stop_env
+  extends: .dev_ref
+
+dump_dev:
+  stage: migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+    ST_CONTAINER: $APP_DIR
+  script:
+    - *db_dump
+  extends: .dev_ref
+
+migrate_preprod_dev:
+  stage: migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+    ST_CONTAINER: $APP_DIR
+    SOURCE_URL: "$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in"
+    TARGET_URL: "$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.apps.ilearndevops.in"
+  script:
+    - *db_restore
+    - *db_migrate
   extends: .dev_ref
 
 dev_deploy:
@@ -149,8 +200,6 @@ dev_deploy:
     DB_PASS: $DEV_DB_PASS
   script:
     - *aks_deploy
-  tags:
-    - docker
   extends: .dev_ref
 
 preprod_build:
@@ -159,8 +208,6 @@ preprod_build:
     - docker:dind
   script:
     - *build_image
-  tags:
-    - docker
   extends: .preprod_ref
 
 preprod_db_create:
@@ -174,9 +221,48 @@ preprod_db_create:
   script:
     - *db_create
     - *fs_create
-  tags:
-    - docker
   extends: .preprod_ref
+
+stop_preprod:
+  stage: stop_env
+  variables:
+    K8S_SERVER: $DEV_K8S_SERVER
+    K8S_CA: $DEV_K8S_CA
+    K8S_USER: $DEV_K8S_USER
+    K8S_TOKEN: $DEV_K8S_TOKEN
+    K8S_CLUSTER: $DEV_K8S_CLUSTER
+  script:
+    - *stop_env
+  extends: .dev_ref
+
+dump_preprod:
+  stage: migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+    ST_CONTAINER: $APP_DIR
+  script:
+    - *db_dump
+  extends: .dev_ref
+
+migrate_prod_preprod:
+  stage: migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+    ST_CONTAINER: $APP_DIR
+    SOURCE_URL: "$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in"
+    TARGET_URL: "$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.apps.ilearndevops.in"
+  script:
+    - *db_restore
+    - *db_migrate
+  extends: .dev_ref
 
 preprod_deploy:
   stage: deploy
@@ -191,8 +277,6 @@ preprod_deploy:
     DB_PASS: $DEV_DB_PASS
   script:
     - *aks_deploy
-  tags:
-    - docker
   extends: .preprod_ref
 
 prod_build:
@@ -201,8 +285,6 @@ prod_build:
     - docker:dind
   script:
     - *build_image
-  tags:
-    - docker
   extends: .prod_ref
 
 prod_db_create:
@@ -233,6 +315,4 @@ prod_deploy:
     DB_PASS: $DEV_DB_PASS
   script:
     - *aks_deploy
-  tags:
-    - docker
   extends: .prod_ref
