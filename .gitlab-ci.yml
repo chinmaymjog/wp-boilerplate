@@ -86,12 +86,15 @@ stages:
   - db-create --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME
 
 .db_dump: &db_dump
+  - echo $ST_ACCOUNT  $ST_KEY $ST_CONTAINER $DB_HOST $DB_ADMIN $DB_PASS $DB_NAME  $APP_DIR
   - db-dump --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
 
 .db_restore: &db_restore
+  - echo $ST_ACCOUNT  $ST_KEY $ST_CONTAINER $DB_HOST $DB_ADMIN $DB_PASS $DB_NAME  $APP_DIR
   - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
 
 .db_migrate: &db_migrate
+  - echo $SOURCE_URL $TARGET_URL $DB_HOST $DB_ADMIN $DB_PASS $DB_NAME $APP_DIR $OLD_URL $NEW_URL
   - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
 .fs_create: &fs_create
