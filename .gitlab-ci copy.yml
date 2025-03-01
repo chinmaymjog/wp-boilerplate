@@ -45,29 +45,10 @@ variables:
   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
 
 stages:
-  - generate
   - build
   - stop_env
   - migrations
   - deploy
-
-generate_variable:
-  stage: generate
-  script:
-    - echo "Generating variables"
-    - echo FS_NAME="lab-k8s" > .env
-    - echo APP_DIR="$CI_PROJECT_NAME" >> .env
-    - echo APP_NAMESPACE="$CI_PROJECT_NAME" >> .env
-    - echo IMAGE_TAG="latest" >> .env
-    - echo ENV="dev" >> .env
-    - echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
-    - echo ENV_APP_DIR="$CI_PROJECT_NAME/dev" >> .env
-    - echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
-    - echo SITE_URL="$ENV-$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG.apps.ilearndevops.in" >> .env
-    - cat .env
-  artifacts:
-    reports:
-      dotenv: .env
 
 .dev_ref:
   environment:
@@ -105,10 +86,10 @@ generate_variable:
   - db-create --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME
 
 .db_dump: &db_dump
-  - db-dump --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
+  - db-dump --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $APP_DIR
 
 .db_restore: &db_restore
-  - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $ST_CONTAINER
+  - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $ST_ACCOUNT --stkey $ST_KEY --stcontainer $$APP_DIR
 
 .db_migrate: &db_migrate
   - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
@@ -185,7 +166,6 @@ dump_dev:
     DB_PASS: $DEV_DB_PASS
     ST_ACCOUNT: $DEV_ST_ACCOUNT
     ST_KEY: $DEV_ST_KEY
-    ST_CONTAINER: $APP_DIR
   script:
     - *db_dump
   extends: .dev_ref
@@ -198,9 +178,6 @@ migrate_preprod_dev:
     DB_PASS: $DEV_DB_PASS
     ST_ACCOUNT: $DEV_ST_ACCOUNT
     ST_KEY: $DEV_ST_KEY
-    ST_CONTAINER: $APP_DIR
-    SOURCE_URL: $ENV-$CI_PROJECT_NAME.apps.ilearndevops.in
-    TARGET_URL: $SITE_URL
   script:
     - *db_restore
     - *db_migrate
@@ -262,7 +239,6 @@ dump_preprod:
     DB_PASS: $DEV_DB_PASS
     ST_ACCOUNT: $DEV_ST_ACCOUNT
     ST_KEY: $DEV_ST_KEY
-    ST_CONTAINER: $APP_DIR
   script:
     - *db_dump
   extends: .preprod_ref
@@ -275,9 +251,6 @@ migrate_prod_preprod:
     DB_PASS: $DEV_DB_PASS
     ST_ACCOUNT: $DEV_ST_ACCOUNT
     ST_KEY: $DEV_ST_KEY
-    ST_CONTAINER: $APP_DIR
-    SOURCE_URL: $CI_PROJECT_NAME.apps.ilearndevops.in
-    TARGET_URL: $SITE_URL
   script:
     - *db_restore
     - *db_migrate
