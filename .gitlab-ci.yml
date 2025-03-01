@@ -1,7 +1,9 @@
-image: chinmaymjog/cicd-toolkit:latest
-
-before_script:
-  - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+default:
+  image: chinmaymjog/cicd-toolkit:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker info && docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
 
 variables:
   DOCKER_HOST: tcp://docker:2376
@@ -24,6 +26,7 @@ stages:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
   tags:
     - docker
+  when: manual
 
 .preprod_ref:
   environment:
@@ -33,6 +36,7 @@ stages:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   tags:
     - docker
+  when: manual
 
 .prod_ref:
   environment:
@@ -42,6 +46,7 @@ stages:
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
   tags:
     - docker
+  when: manual
 
 .build_image: &build_image
   - echo $IMAGE_TAG
@@ -86,6 +91,7 @@ stages:
   - envsubst < ./deploy/values.yaml > ./deploy/$APP_NAME-values.yaml
   - cat ./deploy/$APP_NAME-values.yaml
   - helm upgrade --install $APP_NAME --namespace $APP_LOCATION --create-namespace ./deploy -f ./deploy/$APP_NAME-values.yaml
+  - rm -f ~/.kube/config
 
 .stop_env: &stop_env
   - kubectl config set-cluster $AKS_CLUSTER --server=$AKS_SERVER --certificate-authority=$AKS_CA
@@ -137,8 +143,6 @@ generate_variable:
 
 dev_build:
   stage: build
-  services:
-    - docker:dind
   script:
     - *build_image
   extends: .dev_ref
@@ -165,7 +169,6 @@ stop_dev:
   script:
     - *stop_env
   extends: .dev_ref
-  when: manual
 
 dump_dev:
   stage: migrations
@@ -176,7 +179,6 @@ dump_dev:
   script:
     - *db_dump
   extends: .dev_ref
-  when: manual
 
 # migrate_preprod_dev:
 #   stage: migrations
@@ -193,7 +195,6 @@ dump_dev:
 #     - *db_restore
 #     - *db_migrate
 #   extends: .dev_ref
-#   when: manual
 
 dev_deploy:
   stage: deploy
@@ -212,8 +213,6 @@ dev_deploy:
 
 preprod_build:
   stage: build
-  services:
-    - docker:dind
   script:
     - *build_image
   extends: .preprod_ref
@@ -240,7 +239,6 @@ stop_preprod:
   script:
     - *stop_env
   extends: .preprod_ref
-  when: manual
 
 dump_preprod:
   stage: migrations
@@ -251,7 +249,6 @@ dump_preprod:
   script:
     - *db_dump
   extends: .preprod_ref
-  when: manual
 
 # migrate_prod_preprod:
 #   stage: migrations
@@ -268,7 +265,6 @@ dump_preprod:
 #     - *db_restore
 #     - *db_migrate
 #   extends: .preprod_ref
-#   when: manual
 
 preprod_deploy:
   stage: deploy
@@ -287,8 +283,6 @@ preprod_deploy:
 
 prod_build:
   stage: build
-  services:
-    - docker:dind
   script:
     - *build_image
   extends: .prod_ref
@@ -302,8 +296,6 @@ prod_db_create:
   script:
     - *db_create
     - *fs_create
-  tags:
-    - docker
   extends: .prod_ref
 
 stop_prod:
@@ -317,7 +309,6 @@ stop_prod:
   script:
     - *stop_env
   extends: .prod_ref
-  when: manual
 
 dump_prod:
   stage: migrations
@@ -328,7 +319,6 @@ dump_prod:
   script:
     - *db_dump
   extends: .prod_ref
-  when: manual
 
 # migrate_preprod_prod:
 #   stage: migrations
@@ -345,7 +335,6 @@ dump_prod:
 #     - *db_restore
 #     - *db_migrate
 #   extends: .prod_ref
-#   when: manual
 
 prod_deploy:
   stage: deploy
