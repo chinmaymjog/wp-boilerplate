@@ -116,18 +116,21 @@ generate_variable:
     - |
       # Set IMAGE_TAG based on environment
       if [[ "$ENV" == "preprod" ]]; then
+        echo ENV="$ENV" >> .env
         echo IMAGE_TAG="preprod"  >> .env 
         echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
         echo APP_ENV_LOCATION="$CI_PROJECT_NAME/preprod" >> .env 
         echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
         echo SITE_URL="$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" >> .env
       elif [[ "$ENV" == "prod" ]]; then
+        echo ENV="$ENV" >> .env
         echo IMAGE_TAG="latest" >> .env
         echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
         echo APP_ENV_LOCATION="$CI_PROJECT_NAME/prod" >> .env
         echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
         echo SITE_URL="$SITE_DOMAIN" >> .env
       else
+        echo ENV="$ENV" >> .env
         echo IMAGE_TAG="$CI_COMMIT_REF_SLUG" >> .env
         echo APP_NAME="$ENV-$CI_COMMIT_REF_SLUG" >> .env
         echo APP_ENV_LOCATION="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG" >> .env
