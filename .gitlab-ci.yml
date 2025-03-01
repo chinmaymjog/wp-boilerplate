@@ -61,13 +61,13 @@ stages:
   - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
 .fs_create: &fs_create
-  - fs-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfilesystem $PVC_FILESHARE --dir $APP_LOCATION
-  - fs-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfilesystem $PVC_FILESHARE --dir $APP_ENV_LOCATION
+  - fs-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_LOCATION
+  - fs-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_ENV_LOCATION
   - cat $HTACCESS_FILE > $APP_NAME.htaccess
   - cat $APP_NAME.htaccess
-  - fs-upload --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfilesystem $PVC_FILESHARE --dir $APP_ENV_LOCATION --file $APP_NAME.htaccess
-  - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stfilesystem $SNAPSHOT_CONTAINER --dir $APP_LOCATION
-  - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stfilesystem $SNAPSHOT_CONTAINER --dir $APP_ENV_LOCATION
+  - fs-upload --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_ENV_LOCATION --file $APP_NAME.htaccess
+  - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_LOCATION
+  - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_ENV_LOCATION
 
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
