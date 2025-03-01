@@ -2,8 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.app.name }}
-  namespace: {{ .Values.app.namespace }}
+  
 spec:
+  replicas: {{ .Values.app.replicas }}
   selector:
     matchLabels:
       app: {{ .Values.app.name }}
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.app.name }}
-        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+        image: {{ .Values.app.image.registry }}/{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}
         env:
         - name: WORDPRESS_DB_HOST
           value: {{ .Values.database.db_host }}
@@ -33,10 +34,10 @@ spec:
         volumeMounts:
           - mountPath: /usr/src/wordpress/wp-content/uploads
             name: nfs-mount
-            subPath: {{ .Values.app.pvc_path }}/uploads
+            subPath: {{ .Values.app.pvc.path }}/uploads
           - mountPath: /usr/src/wordpress/.htaccess
             name: nfs-mount
-            subPath: {{ .Values.app.pvc_path }}/{{ .Values.app.name }}.htaccess
+            subPath: {{ .Values.app.pvc.path }}/{{ .Values.app.name }}.htaccess
       imagePullSecrets:
         - name: cr-auth
       volumes:

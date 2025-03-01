@@ -1,15 +1,16 @@
 app:
+  env: $ENV
   name: $APP_NAME
-  hosts: $SITE_URL
-  pvc_path: $APP_ENV_LOCATION
-
-pvc:
-  share: $PVC_FILESHARE
-
-image:
-  registry: $CR_REPO
-  repository: $APP_LOCATION
-  tag: $IMAGE_TAG
+  image:
+    registry: $CR_REPO
+    repository: $APP_LOCATION
+    tag: $IMAGE_TAG
+  replicas: 1
+  pvc:
+    share: $PVC_FILESHARE
+    path: $APP_ENV_LOCATION
+  hosts:
+    - host: $SITE_URL
 
 database:
   db_host: $DB_HOST
