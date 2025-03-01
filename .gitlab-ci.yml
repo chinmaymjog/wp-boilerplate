@@ -51,26 +51,6 @@ stages:
   - migrations
   - deploy
 
-generate_variable:
-  stage: generate
-  script:
-    - echo "Generating variables"
-    - echo FS_NAME="lab-k8s" > .env
-    - echo APP_DIR="$CI_PROJECT_NAME" >> .env
-    - echo APP_NAMESPACE="$CI_PROJECT_NAME" >> .env
-    - echo IMAGE_TAG="latest" >> .env
-    - echo ENV="dev" >> .env
-    - echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
-    - echo ENV_APP_DIR="$CI_PROJECT_NAME/dev" >> .env
-    - echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
-    - echo SITE_URL="$ENV-$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG.apps.ilearndevops.in" >> .env
-    - cat .env
-  artifacts:
-    reports:
-      dotenv: .env
-  tags:
-    - docker
-
 .dev_ref:
   environment:
     name: "development"
@@ -147,6 +127,26 @@ generate_variable:
   - kubectl config use-context $K8S_CLUSTER
   - kubectl scale -n $APP_NAMESPACE deployment/$APP_NAME --replicas 0
 
+generate_variable:
+  stage: generate
+  script:
+    - echo "Generating variables"
+    - echo FS_NAME="lab-k8s" > .env
+    - echo APP_DIR="$CI_PROJECT_NAME" >> .env
+    - echo APP_NAMESPACE="$CI_PROJECT_NAME" >> .env
+    - echo IMAGE_TAG="latest" >> .env
+    - echo ENV="dev" >> .env
+    - echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
+    - echo ENV_APP_DIR="$CI_PROJECT_NAME/dev" >> .env
+    - echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
+    - echo SITE_URL="$ENV-$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG.apps.ilearndevops.in" >> .env
+    - cat .env
+  artifacts:
+    reports:
+      dotenv: .env
+  tags:
+    - docker
+
 dev_build:
   stage: build
   services:
@@ -179,6 +179,7 @@ stop_dev:
   script:
     - *stop_env
   extends: .dev_ref
+  when: manual
 
 dump_dev:
   stage: migrations
@@ -192,6 +193,7 @@ dump_dev:
   script:
     - *db_dump
   extends: .dev_ref
+  when: manual
 
 migrate_preprod_dev:
   stage: migrations
@@ -208,6 +210,7 @@ migrate_preprod_dev:
     - *db_restore
     - *db_migrate
   extends: .dev_ref
+  when: manual
 
 dev_deploy:
   stage: deploy
@@ -256,6 +259,7 @@ stop_preprod:
   script:
     - *stop_env
   extends: .preprod_ref
+  when: manual
 
 dump_preprod:
   stage: migrations
@@ -269,6 +273,7 @@ dump_preprod:
   script:
     - *db_dump
   extends: .preprod_ref
+  when: manual
 
 migrate_prod_preprod:
   stage: migrations
@@ -285,6 +290,7 @@ migrate_prod_preprod:
     - *db_restore
     - *db_migrate
   extends: .preprod_ref
+  when: manual
 
 preprod_deploy:
   stage: deploy
@@ -323,6 +329,50 @@ prod_db_create:
   tags:
     - docker
   extends: .prod_ref
+
+stop_prod:
+  stage: stop_env
+  variables:
+    K8S_SERVER: $DEV_K8S_SERVER
+    K8S_CA: $DEV_K8S_CA
+    K8S_USER: $DEV_K8S_USER
+    K8S_TOKEN: $DEV_K8S_TOKEN
+    K8S_CLUSTER: $DEV_K8S_CLUSTER
+  script:
+    - *stop_env
+  extends: .prod_ref
+  when: manual
+
+dump_prod:
+  stage: migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+    ST_FILESYSTEM: $APP_DIR
+  script:
+    - *db_dump
+  extends: .prod_ref
+  when: manual
+
+migrate_preprod_prod:
+  stage: migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    ST_ACCOUNT: $DEV_ST_ACCOUNT
+    ST_KEY: $DEV_ST_KEY
+    ST_FILESYSTEM: $APP_DIR
+    SOURCE_URL: $CI_PROJECT_NAME.apps.ilearndevops.in
+    TARGET_URL: $SITE_URL
+  script:
+    - *db_restore
+    - *db_migrate
+  extends: .prod_ref
+  when: manual
 
 prod_deploy:
   stage: deploy
