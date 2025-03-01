@@ -99,8 +99,8 @@ stages:
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfilesystem $FS_NAME --dir $APP_DIR
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfilesystem $FS_NAME --dir $ENV_APP_DIR
   - cat $HTACCESS_FILE > $APP_NAME-htaccess
-  - cat $APP_NAME_htaccess
-  - fs-upload --staccount $ST_ACCOUNT --stkey $ST_KEY --stfilesystem $FS_NAME --dir $ENV_APP_DIR --file $APP_NAME_htaccess
+  - cat $APP_NAME-htaccess
+  - fs-upload --staccount $ST_ACCOUNT --stkey $ST_KEY --stfilesystem $FS_NAME --dir $ENV_APP_DIR --file $APP_NAME-htaccess
 
 .assets_sync: &assets_sync
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
