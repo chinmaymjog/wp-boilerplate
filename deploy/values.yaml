@@ -1,14 +1,14 @@
 app:
   name: $APP_NAME
   hosts: $SITE_URL
-  pvc_path: $ENV_APP_DIR
+  pvc_path: $APP_ENV_LOCATION
 
 pvc:
-  share: $FS_NAME
+  share: $PVC_FILESHARE
 
 image:
   registry: $CR_REPO
-  repository: $CI_PROJECT_NAME
+  repository: $APP_LOCATION
   tag: $IMAGE_TAG
 
 database:
