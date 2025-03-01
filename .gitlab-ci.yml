@@ -98,7 +98,7 @@ stages:
 .fs_create: &fs_create
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfilesystem $FS_NAME --dir $APP_DIR
   - fs-create --staccount $ST_ACCOUNT --stkey $ST_KEY --stfilesystem $FS_NAME --dir $ENV_APP_DIR
-  - cat $HTACCESS_FILE > $APP_NAME_htaccess
+  - cat $HTACCESS_FILE > $APP_NAME-htaccess
   - cat $APP_NAME_htaccess
   - fs-upload --staccount $ST_ACCOUNT --stkey $ST_KEY --stfilesystem $FS_NAME --dir $ENV_APP_DIR --file $APP_NAME_htaccess
 
