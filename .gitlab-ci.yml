@@ -64,11 +64,11 @@ stages:
   - |
     case "$SRC_ENV" in 
       "preprod") 
-        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
+        SRC_APP_NAME="$SRC_ENV-$CI_PROJECT_NAME"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$SRC_ENV" ;;
       "prod") 
-        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
+        SRC_APP_NAME="$SRC_ENV-$CI_PROJECT_NAME"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$SRC_ENV" ;;
     esac
   - echo "===> Restoring database from $SRC_APP_NAME environment"
   - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --srcstaccount $SNAPSHOT_STORAGE_ACCOUNT --srcstkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --srcstcontainer $SNAPSHOT_CONTAINER --path $SRC_APP_ENV_LOCATION
@@ -77,9 +77,9 @@ stages:
   - |
     case "$SRC_ENV" in 
       "preprod") 
-        SRC_URL="$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
+        SRC_URL="$SRC_ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
       "prod") 
-        SRC_URL="$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
+        SRC_URL="$SRC_ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
     esac
   - echo "===> Replacing site URLs in database from $SRC_URL to $SITE_URL environment"
   - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$SITE_URL" -e "OLD_URL=$SRC_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
@@ -97,11 +97,11 @@ stages:
   - |
     case "$SRC_ENV" in 
       "preprod") 
-        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
+        SRC_APP_NAME="$SRC_ENV-$CI_PROJECT_NAME"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$SRC_ENV" ;;
       "prod") 
-        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
+        SRC_APP_NAME="$SRC_ENV-$CI_PROJECT_NAME"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$SRC_ENV" ;;
     esac
   - echo "===> Syncing assests from $SRC_APP_NAME environment"
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstfileshare $SRC_ST_FILESHARE --srcpath $SRC_APP_ENV_LOCATION --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststfileshare $DST_ST_FILESHARE --dstpath $APP_ENV_LOCATION
