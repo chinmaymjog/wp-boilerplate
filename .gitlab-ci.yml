@@ -64,10 +64,10 @@ stages:
     case "$SRC_ENV" in 
       "preprod") 
         SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
       "prod") 
         SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
     esac
   - echo "===> Restoring database from $SRC_APP_NAME environment"
   - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --srcstaccount $SNAPSHOT_STORAGE_ACCOUNT --srcstkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --srcstcontainer $SNAPSHOT_CONTAINER --path $SRC_APP_ENV_LOCATION
@@ -96,9 +96,9 @@ stages:
   - |
     case "$SRC_ENV" in 
       "preprod") 
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
       "prod") 
-        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
     esac
   - echo "===> Restoring database from $SRC_APP_NAME environment"
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstfileshare $SRC_ST_FILESHARE --srcpath $SRC_APP_ENV_LOCATION --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststfileshare $DST_ST_FILESHARE --dstpath $APP_ENV_LOCATION
@@ -301,10 +301,10 @@ migrate_prod_preprod:
     - *db_migrate
   extends: .preprod_ref
 
-asset_sync_prod_prod:
+asset_sync_prod_preprod:
   stage: migrations
   variables:
-    SRC_ENV: "preprod"
+    SRC_ENV: "prod"
     SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
     SRC_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
     SRC_ST_FILESHARE: $PVC_FILESHARE
@@ -381,7 +381,7 @@ migrate_preprod_prod:
     - *db_migrate
   extends: .prod_ref
 
-asset_sync_prod_preprod:
+asset_sync_preprod_prod:
   stage: migrations
   variables:
     SRC_ENV: "preprod"
