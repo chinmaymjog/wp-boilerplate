@@ -90,8 +90,8 @@ stages:
   - cat $HTACCESS_FILE > $APP_NAME.htaccess
   - cat $APP_NAME.htaccess
   - file-upload --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_ENV_LOCATION --file $APP_NAME.htaccess
-  - echo "container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_LOCATION"
-  - echo "container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_ENV_LOCATION"
+  - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_LOCATION
+  - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_ENV_LOCATION
 
 .assets_sync: &assets_sync
   - |
