@@ -60,22 +60,48 @@ stages:
   - db-dump --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --path $APP_ENV_LOCATION
 
 .db_restore: &db_restore
-  - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER
+  - |
+    case "$SRC_ENV" in 
+      "preprod") 
+        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+      "prod") 
+        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+    esac
+  - echo "===> Restoring database from $SRC_APP_NAME environment"
+  - db-restore --host $DB_HOST --admin $DB_ADMIN --password $DB_PASS --dbname $DB_NAME --srcstaccount $SNAPSHOT_STORAGE_ACCOUNT --srcstkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --srcstcontainer $SNAPSHOT_CONTAINER --path $SRC_APP_ENV_LOCATION
 
 .db_migrate: &db_migrate
-  - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$TARGET_URL" -e "OLD_URL=$SOURCE_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
+  - |
+    case "$SRC_ENV" in 
+      "preprod") 
+        SRC_URL="$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
+      "prod") 
+        SRC_URL="$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
+    esac
+  - echo "===> Replacing site URLs in database from $SRC_URL to $SITE_URL environment"
+  - docker run --user www-data --rm -it -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$SITE_URL" -e "OLD_URL=$SRC_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
-.fs_create: &fs_create
-  - fs-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_LOCATION
-  - fs-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_ENV_LOCATION
+.filesystem_create: &filesystem_create
+  - fileshare-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_LOCATION
+  - fileshare-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_ENV_LOCATION
   - cat $HTACCESS_FILE > $APP_NAME.htaccess
   - cat $APP_NAME.htaccess
-  - fs-upload --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_ENV_LOCATION --file $APP_NAME.htaccess
+  - file-upload --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_ENV_LOCATION --file $APP_NAME.htaccess
   - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_LOCATION
   - container-create --staccount $SNAPSHOT_STORAGE_ACCOUNT --stkey $SNAPSHOT_STORAGE_ACCOUNT_KEY --stcontainer $SNAPSHOT_CONTAINER --dir $APP_ENV_LOCATION
 
 .assets_sync: &assets_sync
-  - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststcontainer $CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
+  - |
+    case "$SRC_ENV" in 
+      "preprod") 
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+      "prod") 
+        SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV"
+    esac
+  - echo "===> Restoring database from $SRC_APP_NAME environment"
+  - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstfileshare $SRC_ST_FILESHARE --srcpath $SRC_APP_ENV_LOCATION --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststfileshare $DST_ST_FILESHARE --dstpath $APP_ENV_LOCATION
 
 .aks_deploy: &aks_deploy
   - kubectl config set-cluster $AKS_CLUSTER --server=$AKS_SERVER --certificate-authority=$AKS_CA
@@ -106,9 +132,9 @@ generate_variable:
     - echo "Generating he environment based on branch/tag"
     - |
       case "$CI_COMMIT_REF_NAME" in
-      "$CI_DEFAULT_BRANCH") ENV="preprod" ;;
-      v[0-9]*.[0-9]*.[0-9]*) ENV="prod" ;;
-      *) ENV="dev" ;;
+        "$CI_DEFAULT_BRANCH") ENV="preprod" ;;
+        v[0-9]*.[0-9]*.[0-9]*) ENV="prod" ;;
+        *) ENV="dev" ;;
       esac
     - |
       # Define constants
@@ -119,14 +145,14 @@ generate_variable:
         echo ENV="$ENV" >> .env
         echo IMAGE_TAG="preprod"  >> .env 
         echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
-        echo APP_ENV_LOCATION="$CI_PROJECT_NAME/preprod" >> .env 
+        echo APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" >> .env 
         echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
         echo SITE_URL="$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" >> .env
       elif [[ "$ENV" == "prod" ]]; then
         echo ENV="$ENV" >> .env
         echo IMAGE_TAG="latest" >> .env
         echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
-        echo APP_ENV_LOCATION="$CI_PROJECT_NAME/prod" >> .env
+        echo APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" >> .env
         echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
         echo SITE_URL="$SITE_DOMAIN" >> .env
       else
@@ -158,7 +184,7 @@ dev_db_create:
     DB_PASS: $DEV_DB_PASS
   script:
     - *db_create
-    - *fs_create
+    - *filesystem_create
   extends: .dev_ref
 
 stop_dev:
@@ -183,21 +209,31 @@ dump_dev:
     - *db_dump
   extends: .dev_ref
 
-# migrate_preprod_dev:
-#   stage: migrations
-#   variables:
-#     DB_HOST: $DEV_DB_HOST
-#     DB_ADMIN: $DEV_DB_ADMIN
-#     DB_PASS: $DEV_DB_PASS
-#     ST_ACCOUNT: $DEV_ST_ACCOUNT
-#     ST_KEY: $DEV_ST_KEY
-#     ST_FILESYSTEM: $APP_DIR
-#     SOURCE_URL: $ENV-$CI_PROJECT_NAME.apps.ilearndevops.in
-#     TARGET_URL: $SITE_URL
-#   script:
-#     - *db_restore
-#     - *db_migrate
-#   extends: .dev_ref
+migrate_preprod_dev:
+  stage: migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    SRC_ENV: "preprod"
+  script:
+    - *db_restore
+    - *db_migrate
+  extends: .dev_ref
+
+asset_sync_preprod_dev:
+  stage: migrations
+  variables:
+    SRC_ENV: "preprod"
+    SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    SRC_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    SRC_ST_FILESHARE: $PVC_FILESHARE
+    DST_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    DST_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    DST_ST_FILESHARE: $PVC_FILESHARE
+  script:
+    - *assets_sync
+  extends: .dev_ref
 
 dev_deploy:
   stage: deploy
@@ -228,7 +264,7 @@ preprod_db_create:
     DB_PASS: $PREPROD_DB_PASS
   script:
     - *db_create
-    - *fs_create
+    - *filesystem_create
   extends: .preprod_ref
 
 stop_preprod:
@@ -253,21 +289,31 @@ dump_preprod:
     - *db_dump
   extends: .preprod_ref
 
-# migrate_prod_preprod:
-#   stage: migrations
-#   variables:
-#     DB_HOST: $PREPROD_DB_HOST
-#     DB_ADMIN: $PREPROD_DB_ADMIN
-#     DB_PASS: $PREPROD_DB_PASS
-#     ST_ACCOUNT: $PREPROD_ST_ACCOUNT
-#     ST_KEY: $PREPROD_ST_KEY
-#     ST_FILESYSTEM: $APP_DIR
-#     SOURCE_URL: $CI_PROJECT_NAME.apps.ilearndevops.in
-#     TARGET_URL: $SITE_URL
-#   script:
-#     - *db_restore
-#     - *db_migrate
-#   extends: .preprod_ref
+migrate_prod_preprod:
+  stage: migrations
+  variables:
+    DB_HOST: $PREPROD_DB_HOST
+    DB_ADMIN: $PREPROD_DB_ADMIN
+    DB_PASS: $PREPROD_DB_PASS
+    SRC_ENV: "prod"
+  script:
+    - *db_restore
+    - *db_migrate
+  extends: .preprod_ref
+
+asset_sync_prod_prod:
+  stage: migrations
+  variables:
+    SRC_ENV: "preprod"
+    SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    SRC_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    SRC_ST_FILESHARE: $PVC_FILESHARE
+    DST_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    DST_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    DST_ST_FILESHARE: $PVC_FILESHARE
+  script:
+    - *assets_sync
+  extends: .preprod_ref
 
 preprod_deploy:
   stage: deploy
@@ -298,7 +344,7 @@ prod_db_create:
     DB_PASS: $PROD_DB_PASS
   script:
     - *db_create
-    - *fs_create
+    - *filesystem_create
   extends: .prod_ref
 
 stop_prod:
@@ -323,21 +369,31 @@ dump_prod:
     - *db_dump
   extends: .prod_ref
 
-# migrate_preprod_prod:
-#   stage: migrations
-#   variables:
-#     DB_HOST: $PROD_DB_HOST
-#     DB_ADMIN: $PROD_DB_ADMIN
-#     DB_PASS: $PROD_DB_PASS
-#     ST_ACCOUNT: $PROD_ST_ACCOUNT
-#     ST_KEY: $PROD_ST_KEY
-#     ST_FILESYSTEM: $APP_DIR
-#     SOURCE_URL: $CI_PROJECT_NAME.apps.ilearndevops.in
-#     TARGET_URL: $SITE_URL
-#   script:
-#     - *db_restore
-#     - *db_migrate
-#   extends: .prod_ref
+migrate_preprod_prod:
+  stage: migrations
+  variables:
+    DB_HOST: $PROD_DB_HOST
+    DB_ADMIN: $PROD_DB_ADMIN
+    DB_PASS: $PROD_DB_PASS
+    SRC_ENV: "preprod"
+  script:
+    - *db_restore
+    - *db_migrate
+  extends: .prod_ref
+
+asset_sync_prod_preprod:
+  stage: migrations
+  variables:
+    SRC_ENV: "preprod"
+    SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    SRC_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    SRC_ST_FILESHARE: $PVC_FILESHARE
+    DST_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    DST_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    DST_ST_FILESHARE: $PVC_FILESHARE
+  script:
+    - *assets_sync
+  extends: .prod_ref
 
 prod_deploy:
   stage: deploy
