@@ -15,7 +15,8 @@ stages:
   - generate
   - build
   - stop_env
-  - migrations
+  - db_migrations
+  - asset_sync
   - deploy
 
 .dev_ref:
@@ -96,11 +97,13 @@ stages:
   - |
     case "$SRC_ENV" in 
       "preprod") 
+        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
         SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
       "prod") 
+        SRC_APP_NAME="$ENV-$CI_PROJECT_NAME"
         SRC_APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" ;;
     esac
-  - echo "===> Restoring database from $SRC_APP_NAME environment"
+  - echo "===> Syncing assests from $SRC_APP_NAME environment"
   - assets-sync --srcstaccount $SRC_ST_ACCOUNT --srcstkey $SRC_ST_KEY --srcstfileshare $SRC_ST_FILESHARE --srcpath $SRC_APP_ENV_LOCATION --dststaccount $DST_ST_ACCOUNT --dststkey $DST_ST_KEY --dststfileshare $DST_ST_FILESHARE --dstpath $APP_ENV_LOCATION
 
 .aks_deploy: &aks_deploy
@@ -200,7 +203,7 @@ stop_dev:
   extends: .dev_ref
 
 dump_dev:
-  stage: migrations
+  stage: db_migrations
   variables:
     DB_HOST: $DEV_DB_HOST
     DB_ADMIN: $DEV_DB_ADMIN
@@ -210,7 +213,7 @@ dump_dev:
   extends: .dev_ref
 
 migrate_preprod_dev:
-  stage: migrations
+  stage: db_migrations
   variables:
     DB_HOST: $DEV_DB_HOST
     DB_ADMIN: $DEV_DB_ADMIN
@@ -221,10 +224,36 @@ migrate_preprod_dev:
     - *db_migrate
   extends: .dev_ref
 
+migrate_prod_dev:
+  stage: db_migrations
+  variables:
+    DB_HOST: $DEV_DB_HOST
+    DB_ADMIN: $DEV_DB_ADMIN
+    DB_PASS: $DEV_DB_PASS
+    SRC_ENV: "prod"
+  script:
+    - *db_restore
+    - *db_migrate
+  extends: .dev_ref
+
 asset_sync_preprod_dev:
-  stage: migrations
+  stage: asset_sync
   variables:
     SRC_ENV: "preprod"
+    SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    SRC_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    SRC_ST_FILESHARE: $PVC_FILESHARE
+    DST_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
+    DST_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
+    DST_ST_FILESHARE: $PVC_FILESHARE
+  script:
+    - *assets_sync
+  extends: .dev_ref
+
+asset_sync_prod_dev:
+  stage: asset_sync
+  variables:
+    SRC_ENV: "prod"
     SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
     SRC_ST_KEY: $PVC_STORAGE_ACCOUNT_KEY
     SRC_ST_FILESHARE: $PVC_FILESHARE
@@ -280,7 +309,7 @@ stop_preprod:
   extends: .preprod_ref
 
 dump_preprod:
-  stage: migrations
+  stage: db_migrations
   variables:
     DB_HOST: $PREPROD_DB_HOST
     DB_ADMIN: $PREPROD_DB_ADMIN
@@ -290,7 +319,7 @@ dump_preprod:
   extends: .preprod_ref
 
 migrate_prod_preprod:
-  stage: migrations
+  stage: db_migrations
   variables:
     DB_HOST: $PREPROD_DB_HOST
     DB_ADMIN: $PREPROD_DB_ADMIN
@@ -302,7 +331,7 @@ migrate_prod_preprod:
   extends: .preprod_ref
 
 asset_sync_prod_preprod:
-  stage: migrations
+  stage: asset_sync
   variables:
     SRC_ENV: "prod"
     SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
@@ -360,7 +389,7 @@ stop_prod:
   extends: .prod_ref
 
 dump_prod:
-  stage: migrations
+  stage: db_migrations
   variables:
     DB_HOST: $PROD_DB_HOST
     DB_ADMIN: $PROD_DB_ADMIN
@@ -370,7 +399,7 @@ dump_prod:
   extends: .prod_ref
 
 migrate_preprod_prod:
-  stage: migrations
+  stage: db_migrations
   variables:
     DB_HOST: $PROD_DB_HOST
     DB_ADMIN: $PROD_DB_ADMIN
@@ -382,7 +411,7 @@ migrate_preprod_prod:
   extends: .prod_ref
 
 asset_sync_preprod_prod:
-  stage: migrations
+  stage: asset_sync
   variables:
     SRC_ENV: "preprod"
     SRC_ST_ACCOUNT: $PVC_STORAGE_ACCOUNT
