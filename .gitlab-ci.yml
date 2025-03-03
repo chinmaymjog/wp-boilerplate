@@ -10,6 +10,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_TLS_VERIFY: 1
   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  WP_BASE_IMAGE: chinmaymjog/wp-base:latest
 
 stages:
   - generate
@@ -82,7 +83,7 @@ stages:
         SRC_URL="$SRC_ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
     esac
   - echo "===> Replacing site URLs in database from $SRC_URL to $SITE_URL environment"
-  - docker run --user www-data --rm -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$SITE_URL" -e "OLD_URL=$SRC_URL" wp-base wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
+  - docker run --user www-data --rm -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME"  -e "NEW_URL=$SITE_URL" -e "OLD_URL=$SRC_URL" $WP_BASE_IMAGE wp search-replace $OLD_URL $NEW_URL --skip-columns=guid --allow-root
 
 .filesystem_create: &filesystem_create
   - fileshare-create --staccount $PVC_STORAGE_ACCOUNT --stkey $PVC_STORAGE_ACCOUNT_KEY --stfileshare $PVC_FILESHARE --dir $APP_LOCATION
