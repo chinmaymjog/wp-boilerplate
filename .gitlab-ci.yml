@@ -32,7 +32,7 @@ stages:
 
 .preprod_ref:
   environment:
-    name: "preprod"
+    name: "pre-production"
     url: "https://$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
