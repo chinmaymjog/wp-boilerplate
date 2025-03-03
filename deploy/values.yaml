@@ -11,6 +11,9 @@ app:
     path: $APP_ENV_LOCATION
   hosts:
     - host: $SITE_URL
+  limits:
+    memory: "128Mi"
+    cpu: "500m"
 
 database:
   db_host: $DB_HOST
