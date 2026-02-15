@@ -1,5 +1,5 @@
 default:
-  image: your-username/cicd-toolkit:latest
+  image: chinmaymjog/cicd-toolkit:latest
   services:
     - docker:dind
   before_script:
@@ -10,7 +10,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_TLS_VERIFY: 1
   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  WP_BASE_IMAGE: your-username/wp-base:latest
+  WP_BASE_IMAGE: chinmaymjog/wp-base:latest
 
 stages:
   - generate

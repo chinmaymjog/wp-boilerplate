@@ -17,8 +17,8 @@ This repository provides a production-ready boilerplate for deploying WordPress 
 ## 🧱 Ecosystem Integration
 
 This boilerplate is part of a modular WordPress ecosystem:
-- **[wp-base](https://github.com/your-username/wp-base)**: The hardened, optimized PHP-FPM base image.
-- **[themes-plugins](https://github.com/your-username/themes-plugins)**: a centralized repository for managing multi-tenant themes and plugins.
+- **[wp-base](https://github.com/chinmaymjog/wp-base)**: The hardened, optimized PHP-FPM base image.
+- **[themes-plugins](https://github.com/chinmaymjog/themes-plugins)**: a centralized repository for managing multi-tenant themes and plugins.
 
 ## 📁 Project Structure
 
