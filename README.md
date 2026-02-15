@@ -1,6 +1,7 @@
 # 🎡 WordPress Enterprise Boilerplate (AKS)
+> **Solution Pillar**: Cloud-Native Application Ecosystem for Solution B.
 
-This repository provides a production-ready boilerplate for deploying WordPress at scale on **Azure Kubernetes Service (AKS)**. It follows enterprise best practices for containerization, persistent storage, and automated CI/CD.
+This repository provides a production-ready boilerplate for deploying WordPress at scale on the **[Enterprise AKS Platform](https://github.com/chinmaymjog/aks-tf)**.
 
 ## ✨ Key Features
 
