@@ -12,7 +12,8 @@ services:
       - ./tmp:/var/lib/mysql
 
   wordpress:
-    image: docker.io/chinmaymjog/wp-boilerplate:v0.0.1
+    build: .
+    image: wordpress-boilerplate:v1.0.0
     container_name: wordpress
     ports:
       - "80:80"

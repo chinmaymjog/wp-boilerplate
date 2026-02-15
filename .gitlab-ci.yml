@@ -1,5 +1,5 @@
 default:
-  image: chinmaymjog/cicd-toolkit:latest
+  image: your-username/cicd-toolkit:latest
   services:
     - docker:dind
   before_script:
@@ -10,7 +10,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_TLS_VERIFY: 1
   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  WP_BASE_IMAGE: chinmaymjog/wp-base:latest
+  WP_BASE_IMAGE: your-username/wp-base:latest
 
 stages:
   - generate
@@ -23,7 +23,7 @@ stages:
 .dev_ref:
   environment:
     name: "development"
-    url: "https://$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.apps.ilearndevops.in"
+    url: "https://$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.apps.example.com"
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
   tags:
@@ -33,7 +33,7 @@ stages:
 .preprod_ref:
   environment:
     name: "pre-production"
-    url: "https://$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in"
+    url: "https://$ENV-$CI_PROJECT_NAME.apps.example.com"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   tags:
@@ -78,9 +78,9 @@ stages:
   - |
     case "$SRC_ENV" in 
       "preprod") 
-        SRC_URL="$SRC_ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
+        SRC_URL="$SRC_ENV-$CI_PROJECT_NAME.apps.example.com" ;;
       "prod") 
-        SRC_URL="$SRC_ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" ;;
+        SRC_URL="$SRC_ENV-$CI_PROJECT_NAME.apps.example.com" ;;
     esac
   - echo "===> Replacing site URLs in database from $SRC_URL to $SITE_URL environment"
   - docker run --user www-data --rm -e "WORDPRESS_DB_HOST=$DB_HOST" -e "WORDPRESS_DB_USER=$DB_ADMIN" -e "WORDPRESS_DB_PASSWORD=$DB_PASS" -e "WORDPRESS_DB_NAME=$DB_NAME" $WP_BASE_IMAGE wp search-replace $SRC_URL $SITE_URL --skip-columns=guid
@@ -151,7 +151,7 @@ generate_variable:
         echo APP_NAME="$ENV-$CI_PROJECT_NAME" >> .env
         echo APP_ENV_LOCATION="$CI_PROJECT_NAME/$ENV" >> .env 
         echo DB_NAME="$ENV-$CI_PROJECT_NAME" >> .env
-        echo SITE_URL="$ENV-$CI_PROJECT_NAME.apps.ilearndevops.in" >> .env
+        echo SITE_URL="$ENV-$CI_PROJECT_NAME.apps.example.com" >> .env
       elif [[ "$ENV" == "prod" ]]; then
         echo ENV="$ENV" >> .env
         echo IMAGE_TAG="latest" >> .env
@@ -165,7 +165,7 @@ generate_variable:
         echo APP_NAME="$ENV-$CI_COMMIT_REF_SLUG" >> .env
         echo APP_ENV_LOCATION="$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG" >> .env
         echo DB_NAME="$ENV-$CI_COMMIT_REF_SLUG" >> .env
-        echo SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.apps.ilearndevops.in" >> .env
+        echo SITE_URL="$ENV-$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME.apps.example.com" >> .env
       fi
     - cat .env
   artifacts:
